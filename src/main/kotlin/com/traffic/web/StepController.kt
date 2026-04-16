@@ -32,7 +32,12 @@ class StepController(
         @RequestParam path: String,
         @RequestParam(required = false) headers: String?,
         @RequestParam(required = false) body: String?,
-        @RequestParam(required = false) thinkTimeMs: Int?
+        @RequestParam(required = false) thinkTimeMs: Int?,
+        @RequestParam(required = false) extractorSource: List<String>?,
+        @RequestParam(required = false) extractorJsonPath: List<String>?,
+        @RequestParam(required = false) extractorVariable: List<String>?,
+        @RequestParam(required = false) validatorType: List<String>?,
+        @RequestParam(required = false) validatorExpected: List<String>?
     ): String {
         val plan = planService.findById(planId) ?: return "redirect:/plans"
         val steps = planService.getSteps(planId)
@@ -46,6 +51,9 @@ class StepController(
             }
         } else emptyMap()
 
+        val extractors = buildExtractors(extractorSource, extractorJsonPath, extractorVariable)
+        val validators = buildValidators(validatorType, validatorExpected)
+
         stepRepository.save(
             TestStep(
                 testPlan = plan,
@@ -55,11 +63,46 @@ class StepController(
                 path = path,
                 headers = parsedHeaders,
                 body = body,
-                thinkTimeMs = thinkTimeMs
+                thinkTimeMs = thinkTimeMs,
+                extractors = extractors,
+                validators = validators
             )
         )
 
         return "redirect:/plans/$planId"
+    }
+
+    private fun buildExtractors(
+        sources: List<String>?,
+        jsonPaths: List<String>?,
+        variables: List<String>?
+    ): List<Extractor> {
+        if (sources == null || jsonPaths == null || variables == null) return emptyList()
+        return sources.indices
+            .filter { i -> i < jsonPaths.size && i < variables.size }
+            .filter { i -> jsonPaths[i].isNotBlank() && variables[i].isNotBlank() }
+            .map { i ->
+                Extractor(
+                    source = try { ExtractorSource.valueOf(sources[i]) } catch (_: Exception) { ExtractorSource.BODY },
+                    jsonPath = jsonPaths[i].trim(),
+                    variableName = variables[i].trim()
+                )
+            }
+    }
+
+    private fun buildValidators(
+        types: List<String>?,
+        expecteds: List<String>?
+    ): List<StepValidator> {
+        if (types == null || expecteds == null) return emptyList()
+        return types.indices
+            .filter { i -> i < expecteds.size && expecteds[i].isNotBlank() }
+            .map { i ->
+                StepValidator(
+                    type = try { ValidatorType.valueOf(types[i]) } catch (_: Exception) { ValidatorType.STATUS },
+                    expected = expecteds[i].trim()
+                )
+            }
     }
 
     @PostMapping("/{stepId}/delete")

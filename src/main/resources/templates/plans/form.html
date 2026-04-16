@@ -96,7 +96,24 @@
                     <div class="step-info">
                         <div class="step-name" th:text="${step.name}"></div>
                         <div class="step-path" th:text="${step.path}"></div>
-                        <div th:if="${step.headers != null && !step.headers.isEmpty()}" class="step-path" style="color:var(--violet);" th:text="'Headers: ' + ${step.headers.size()} + ' set'"></div>
+                        <div th:if="${step.headers != null && !step.headers.isEmpty()}" class="step-path" style="color:var(--violet);">
+                            <span th:each="entry : ${step.headers}" class="mono" style="font-size:0.72rem;">
+                                <span th:text="${entry.key}"></span>: <span th:text="${entry.value}"></span>
+                                <br/>
+                            </span>
+                        </div>
+                        <div th:if="${!step.extractors.isEmpty()}" class="step-path" style="color:var(--accent);">
+                            <span th:each="ext : ${step.extractors}" class="mono" style="font-size:0.72rem;">
+                                <span th:text="${ext.source}"></span> <span th:text="${ext.jsonPath}"></span> &rarr; <span th:text="'{{' + ${ext.variableName} + '}}'"></span>
+                                <br/>
+                            </span>
+                        </div>
+                        <div th:if="${!step.validators.isEmpty()}" class="step-path" style="color:var(--warning);">
+                            <span th:each="val : ${step.validators}" class="mono" style="font-size:0.72rem;">
+                                <span th:text="${val.type}"></span> = <span th:text="${val.expected}"></span>
+                                <br/>
+                            </span>
+                        </div>
                     </div>
                     <span class="step-meta" th:text="${step.thinkTimeMs != null ? step.thinkTimeMs + 'ms' : 'default'}"></span>
                     <form th:action="@{/plans/{pid}/steps/{sid}/delete(pid=${plan.id},sid=${step.id})}" method="post">
@@ -143,10 +160,84 @@
                     <label>Body (JSON)</label>
                     <textarea name="body" class="form-control" rows="3" placeholder='{"key": "value"}'></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">Add Step</button>
+
+                <div class="form-section">Extractors <span style="font-weight:400;font-size:0.75rem;text-transform:none;letter-spacing:0;">&mdash; extract values from response to use in next steps as {{variableName}}</span></div>
+                <div id="extractor-list">
+                    <div class="extractor-row" style="display:grid;grid-template-columns:120px 1fr 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Source</label>
+                            <select name="extractorSource" class="form-control">
+                                <option value="BODY">Body</option>
+                                <option value="HEADER">Header</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>JsonPath / Header Name</label>
+                            <input type="text" name="extractorJsonPath" class="form-control" placeholder="$.data.token"/>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Variable Name</label>
+                            <input type="text" name="extractorVariable" class="form-control" placeholder="authToken"/>
+                        </div>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.extractor-row').remove()" style="margin-bottom:0.25rem;">X</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="addExtractorRow()" style="margin-bottom:1.25rem;">+ Add Extractor</button>
+
+                <div class="form-section">Validators <span style="font-weight:400;font-size:0.75rem;text-transform:none;letter-spacing:0;">&mdash; verify response matches expected values</span></div>
+                <div id="validator-list">
+                    <div class="validator-row" style="display:grid;grid-template-columns:160px 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Type</label>
+                            <select name="validatorType" class="form-control">
+                                <option value="STATUS">Status Code</option>
+                                <option value="BODY_CONTAINS">Body Contains</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>Expected Value</label>
+                            <input type="text" name="validatorExpected" class="form-control" placeholder="200"/>
+                        </div>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.validator-row').remove()" style="margin-bottom:0.25rem;">X</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="addValidatorRow()" style="margin-bottom:1.5rem;">+ Add Validator</button>
+
+                <div>
+                    <button type="submit" class="btn btn-primary">Add Step</button>
+                </div>
             </form>
         </div>
     </div>
 </div>
+<script>
+function addExtractorRow() {
+    const html = `<div class="extractor-row" style="display:grid;grid-template-columns:120px 1fr 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+        <div class="form-group" style="margin-bottom:0;">
+            <select name="extractorSource" class="form-control"><option value="BODY">Body</option><option value="HEADER">Header</option></select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <input type="text" name="extractorJsonPath" class="form-control" placeholder="$.data.token"/>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <input type="text" name="extractorVariable" class="form-control" placeholder="authToken"/>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.extractor-row').remove()" style="margin-bottom:0.25rem;">X</button>
+    </div>`;
+    document.getElementById('extractor-list').insertAdjacentHTML('beforeend', html);
+}
+function addValidatorRow() {
+    const html = `<div class="validator-row" style="display:grid;grid-template-columns:160px 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+        <div class="form-group" style="margin-bottom:0;">
+            <select name="validatorType" class="form-control"><option value="STATUS">Status Code</option><option value="BODY_CONTAINS">Body Contains</option></select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+            <input type="text" name="validatorExpected" class="form-control" placeholder="200"/>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.validator-row').remove()" style="margin-bottom:0.25rem;">X</button>
+    </div>`;
+    document.getElementById('validator-list').insertAdjacentHTML('beforeend', html);
+}
+</script>
 </body>
 </html>
