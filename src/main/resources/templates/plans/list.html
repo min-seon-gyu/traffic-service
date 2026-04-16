@@ -4,34 +4,41 @@
 <body>
 <nav th:replace="~{layout :: nav}"></nav>
 <div class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <h2>Test Plans</h2>
+    <div class="page-header fade-up">
+        <div>
+            <h2>Test Plans</h2>
+            <p class="subtitle">Configure and manage your load test scenarios</p>
+        </div>
         <a href="/plans/new" class="btn btn-primary">+ New Plan</a>
     </div>
-    <div class="card">
+    <div class="card fade-up">
         <table>
             <thead><tr><th>Name</th><th>Target URL</th><th>VU</th><th>Created</th><th>Actions</th></tr></thead>
             <tbody>
             <tr th:each="plan : ${plans}">
                 <td><a th:href="@{/plans/{id}(id=${plan.id})}" th:text="${plan.name}"></a></td>
-                <td th:text="${plan.targetBaseUrl}"></td>
-                <td th:text="${plan.loadConfig.vuCount}"></td>
-                <td th:text="${#temporals.format(plan.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                <td><span class="mono" style="color:var(--text-secondary)" th:text="${plan.targetBaseUrl}"></span></td>
+                <td><span class="mono" th:text="${plan.loadConfig.vuCount}"></span></td>
+                <td style="color:var(--text-muted);font-size:0.85rem" th:text="${#temporals.format(plan.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
                 <td>
-                    <form th:action="@{/executions/start/{id}(id=${plan.id})}" method="post" style="display:inline;">
-                        <button type="submit" class="btn btn-success btn-sm">Run</button>
-                    </form>
-                    <form th:action="@{/plans/{id}/duplicate(id=${plan.id})}" method="post" style="display:inline;">
-                        <button type="submit" class="btn btn-secondary btn-sm">Copy</button>
-                    </form>
-                    <form th:action="@{/plans/{id}/delete(id=${plan.id})}" method="post" style="display:inline;">
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
+                    <div class="btn-group">
+                        <form th:action="@{/executions/start/{id}(id=${plan.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-success btn-sm">Run</button>
+                        </form>
+                        <form th:action="@{/plans/{id}/duplicate(id=${plan.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-ghost btn-sm">Copy</button>
+                        </form>
+                        <form th:action="@{/plans/{id}/delete(id=${plan.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">Del</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             </tbody>
         </table>
-        <p th:if="${#lists.isEmpty(plans)}" style="text-align:center; padding:2rem; color:#999;">No plans yet. Create one to get started.</p>
+        <div th:if="${#lists.isEmpty(plans)}" class="empty-state">
+            <p>No plans yet. Create one to get started.</p>
+        </div>
     </div>
 </div>
 </body>

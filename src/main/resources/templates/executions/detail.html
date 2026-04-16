@@ -4,57 +4,74 @@
 <body>
 <nav th:replace="~{layout :: nav}"></nav>
 <div class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <h2>Execution #<span th:text="${execution.id}"></span></h2>
+    <div class="page-header fade-up">
+        <div>
+            <h2>Execution #<span th:text="${execution.id}"></span></h2>
+        </div>
         <span class="badge" th:if="${execution.result != null}"
               th:classappend="'badge-' + ${execution.result.name().toLowerCase()}"
-              th:text="${execution.result}" style="font-size:1.2rem; padding: 0.4rem 1rem;"></span>
+              th:text="${execution.result}"
+              style="font-size:0.85rem; padding:0.35rem 0.9rem;"></span>
     </div>
-    <div class="metric-cards">
-        <div class="card metric-card">
-            <div class="value" th:text="${execution.totalRequests}"></div>
-            <div class="label">Total Requests</div>
+
+    <div class="metric-grid fade-up">
+        <div class="metric-item">
+            <div class="metric-value accent" th:text="${execution.totalRequests}"></div>
+            <div class="metric-label">Total Requests</div>
         </div>
-        <div class="card metric-card">
-            <div class="value" th:text="${#numbers.formatDecimal(execution.avgResponseTime, 0, 1)} + 'ms'"></div>
-            <div class="label">Avg Response Time</div>
+        <div class="metric-item violet">
+            <div class="metric-value violet" th:text="${#numbers.formatDecimal(execution.avgResponseTime, 0, 1)} + 'ms'"></div>
+            <div class="metric-label">Avg Response Time</div>
         </div>
-        <div class="card metric-card">
-            <div class="value" th:text="${#numbers.formatDecimal(execution.tps, 0, 1)}"></div>
-            <div class="label">TPS</div>
+        <div class="metric-item success">
+            <div class="metric-value success" th:text="${#numbers.formatDecimal(execution.tps, 0, 1)}"></div>
+            <div class="metric-label">TPS</div>
         </div>
-        <div class="card metric-card">
-            <div class="value" th:text="${#numbers.formatDecimal(execution.errorRate, 0, 1)} + '%'"></div>
-            <div class="label">Error Rate</div>
+        <div class="metric-item warning">
+            <div class="metric-value" th:text="${#numbers.formatDecimal(execution.errorRate, 0, 1)} + '%'"
+                 th:styleappend="${execution.errorRate > 5 ? 'color:var(--danger)' : 'color:var(--success)'}"></div>
+            <div class="metric-label">Error Rate</div>
         </div>
     </div>
-    <div class="card">
-        <h3>Response Time Distribution</h3>
-        <table>
-            <tr><th>p50</th><th>p90</th><th>p95</th><th>p99</th></tr>
-            <tr>
-                <td th:text="${#numbers.formatDecimal(execution.p50, 0, 1)} + 'ms'"></td>
-                <td th:text="${#numbers.formatDecimal(execution.p90, 0, 1)} + 'ms'"></td>
-                <td th:text="${#numbers.formatDecimal(execution.p95, 0, 1)} + 'ms'"></td>
-                <td th:text="${#numbers.formatDecimal(execution.p99, 0, 1)} + 'ms'"></td>
-            </tr>
-        </table>
+
+    <div class="card fade-up">
+        <div class="card-header"><h3>Response Time Distribution</h3></div>
+        <div class="percentile-grid">
+            <div class="percentile-item">
+                <div class="percentile-label">p50</div>
+                <div class="percentile-value" style="color:var(--success)" th:text="${#numbers.formatDecimal(execution.p50, 0, 1)} + 'ms'"></div>
+            </div>
+            <div class="percentile-item">
+                <div class="percentile-label">p90</div>
+                <div class="percentile-value" style="color:var(--accent)" th:text="${#numbers.formatDecimal(execution.p90, 0, 1)} + 'ms'"></div>
+            </div>
+            <div class="percentile-item">
+                <div class="percentile-label">p95</div>
+                <div class="percentile-value" style="color:var(--warning)" th:text="${#numbers.formatDecimal(execution.p95, 0, 1)} + 'ms'"></div>
+            </div>
+            <div class="percentile-item">
+                <div class="percentile-label">p99</div>
+                <div class="percentile-value" style="color:var(--danger)" th:text="${#numbers.formatDecimal(execution.p99, 0, 1)} + 'ms'"></div>
+            </div>
+        </div>
     </div>
-    <div class="card">
-        <h3>Summary</h3>
-        <table>
-            <tr><td>Status</td><td th:text="${execution.status}"></td></tr>
-            <tr><td>Success</td><td th:text="${execution.successCount}"></td></tr>
-            <tr><td>Failed</td><td th:text="${execution.failCount}"></td></tr>
+
+    <div class="card fade-up">
+        <div class="card-header"><h3>Summary</h3></div>
+        <table class="summary-table">
+            <tr><td>Status</td><td><span class="badge" th:classappend="'badge-' + ${execution.status.name().toLowerCase()}" th:text="${execution.status}"></span></td></tr>
+            <tr><td>Success</td><td style="color:var(--success)" th:text="${execution.successCount}"></td></tr>
+            <tr><td>Failed</td><td style="color:var(--danger)" th:text="${execution.failCount}"></td></tr>
             <tr><td>Started</td><td th:text="${#temporals.format(execution.startedAt, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
             <tr th:if="${execution.finishedAt != null}"><td>Finished</td><td th:text="${#temporals.format(execution.finishedAt, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
         </table>
     </div>
-    <div style="margin-top:1rem;">
-        <a th:if="${plan != null}" th:href="@{/executions/start/{id}(id=${plan.id})}" class="btn btn-success"
-           onclick="event.preventDefault(); document.getElementById('rerun-form').submit();">Rerun</a>
-        <form th:if="${plan != null}" id="rerun-form" th:action="@{/executions/start/{id}(id=${plan.id})}" method="post" style="display:none;"></form>
-        <a href="/executions" class="btn btn-secondary">Back to List</a>
+
+    <div style="margin-top:1rem; display:flex; gap:0.5rem;" class="fade-up">
+        <form th:if="${plan != null}" th:action="@{/executions/start/{id}(id=${plan.id})}" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-success">Rerun</button>
+        </form>
+        <a href="/executions" class="btn btn-ghost">Back to List</a>
     </div>
 </div>
 </body>

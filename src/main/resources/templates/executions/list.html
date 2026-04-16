@@ -4,27 +4,37 @@
 <body>
 <nav th:replace="~{layout :: nav}"></nav>
 <div class="container">
-    <h2>Execution History</h2>
-    <div class="card">
+    <div class="page-header fade-up">
+        <div>
+            <h2>Execution History</h2>
+            <p class="subtitle">View past and running load test results</p>
+        </div>
+    </div>
+    <div class="card fade-up">
         <table>
             <thead><tr><th>#</th><th>Status</th><th>Result</th><th>Requests</th><th>Avg (ms)</th><th>Error %</th><th>Started</th><th></th></tr></thead>
             <tbody>
             <tr th:each="exec : ${executions}">
-                <td th:text="${exec.id}"></td>
+                <td class="mono" style="color:var(--text-muted)" th:text="'#' + ${exec.id}"></td>
                 <td><span class="badge" th:classappend="'badge-' + ${exec.status.name().toLowerCase()}" th:text="${exec.status}"></span></td>
-                <td><span th:if="${exec.result != null}" class="badge" th:classappend="'badge-' + ${exec.result.name().toLowerCase()}" th:text="${exec.result}"></span></td>
-                <td th:text="${exec.totalRequests}"></td>
-                <td th:text="${#numbers.formatDecimal(exec.avgResponseTime, 0, 1)}"></td>
-                <td th:text="${#numbers.formatDecimal(exec.errorRate, 0, 1) + '%'}"></td>
-                <td th:text="${#temporals.format(exec.startedAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                <td>
+                    <span th:if="${exec.result != null}" class="badge" th:classappend="'badge-' + ${exec.result.name().toLowerCase()}" th:text="${exec.result}"></span>
+                    <span th:unless="${exec.result != null}" style="color:var(--text-muted)">&mdash;</span>
+                </td>
+                <td class="mono" th:text="${exec.totalRequests}"></td>
+                <td class="mono" th:text="${#numbers.formatDecimal(exec.avgResponseTime, 0, 1)}"></td>
+                <td class="mono" th:text="${#numbers.formatDecimal(exec.errorRate, 0, 1) + '%'}"></td>
+                <td style="color:var(--text-muted);font-size:0.85rem" th:text="${#temporals.format(exec.startedAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
                 <td>
                     <a th:if="${exec.status.name() == 'RUNNING'}" th:href="@{/executions/{id}/live(id=${exec.id})}" class="btn btn-primary btn-sm">Live</a>
-                    <a th:unless="${exec.status.name() == 'RUNNING'}" th:href="@{/executions/{id}(id=${exec.id})}" class="btn btn-secondary btn-sm">Detail</a>
+                    <a th:unless="${exec.status.name() == 'RUNNING'}" th:href="@{/executions/{id}(id=${exec.id})}" class="btn btn-ghost btn-sm">Detail</a>
                 </td>
             </tr>
             </tbody>
         </table>
-        <p th:if="${#lists.isEmpty(executions)}" style="text-align:center; padding:2rem; color:#999;">No executions yet.</p>
+        <div th:if="${#lists.isEmpty(executions)}" class="empty-state">
+            <p>No executions yet.</p>
+        </div>
     </div>
 </div>
 </body>
