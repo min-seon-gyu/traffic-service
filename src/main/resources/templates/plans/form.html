@@ -55,6 +55,22 @@
                 </div>
             </div>
 
+            <div class="form-section">Stages <span style="font-weight:400;font-size:0.75rem;text-transform:none;letter-spacing:0;">&mdash; define variable load profile (overrides VU/Duration above if set)</span></div>
+            <div id="stage-list">
+                <div th:if="${!isNew}" th:each="stage : ${plan.loadConfig.stages}" class="stage-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Duration (s)</label>
+                        <input type="number" name="stageDuration" class="form-control" th:value="${stage.durationSeconds}" min="1"/>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Target VU</label>
+                        <input type="number" name="stageTargetVu" class="form-control" th:value="${stage.targetVu}" min="0"/>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.stage-row').remove()" style="margin-bottom:0.25rem;">X</button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="addStageRow()" style="margin-bottom:1rem;">+ Add Stage</button>
+
             <div class="form-section">Safety</div>
             <div class="grid-2">
                 <div class="form-group">
@@ -65,9 +81,108 @@
                     <label>Graceful Stop Timeout (seconds)</label>
                     <input type="number" name="gracefulStopTimeout" class="form-control" th:value="${plan.safetyConfig.gracefulStopTimeout}" min="0"/>
                 </div>
+            </div>
+
+            <div class="form-section">Thresholds <span style="font-weight:400;font-size:0.75rem;text-transform:none;letter-spacing:0;">&mdash; auto Pass/Fail based on metrics</span></div>
+            <div id="threshold-list">
+                <div th:if="${!isNew}" th:each="th : ${plan.thresholds}" class="threshold-row" style="display:grid;grid-template-columns:140px 100px 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Metric</label>
+                        <select name="thresholdMetric" class="form-control">
+                            <option value="AVG" th:selected="${th.metric.name() == 'AVG'}">AVG</option>
+                            <option value="P50" th:selected="${th.metric.name() == 'P50'}">P50</option>
+                            <option value="P90" th:selected="${th.metric.name() == 'P90'}">P90</option>
+                            <option value="P95" th:selected="${th.metric.name() == 'P95'}">P95</option>
+                            <option value="P99" th:selected="${th.metric.name() == 'P99'}">P99</option>
+                            <option value="ERROR_RATE" th:selected="${th.metric.name() == 'ERROR_RATE'}">Error Rate</option>
+                            <option value="TPS" th:selected="${th.metric.name() == 'TPS'}">TPS</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Operator</label>
+                        <select name="thresholdOperator" class="form-control">
+                            <option value="LT" th:selected="${th.operator.name() == 'LT'}">&lt;</option>
+                            <option value="LTE" th:selected="${th.operator.name() == 'LTE'}">&le;</option>
+                            <option value="GT" th:selected="${th.operator.name() == 'GT'}">&gt;</option>
+                            <option value="GTE" th:selected="${th.operator.name() == 'GTE'}">&ge;</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Value</label>
+                        <input type="text" name="thresholdValue" class="form-control" th:value="${th.value}"/>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.threshold-row').remove()" style="margin-bottom:0.25rem;">X</button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="addThresholdRow()" style="margin-bottom:1rem;">+ Add Threshold</button>
+
+            <div class="form-section">Advanced</div>
+            <div class="grid-2">
                 <div class="form-group">
                     <label>Request Timeout (ms)</label>
                     <input type="number" name="timeoutMs" class="form-control" th:value="${plan.advancedConfig.timeoutMs}" min="100"/>
+                </div>
+                <div class="form-group">
+                    <label>Think Time Strategy</label>
+                    <select name="thinkTimeStrategy" class="form-control" id="thinkTimeStrategy" onchange="toggleThinkTime()">
+                        <option value="CONSTANT" th:selected="${plan.advancedConfig.thinkTimeStrategy.name() == 'CONSTANT'}">Constant</option>
+                        <option value="RANDOM" th:selected="${plan.advancedConfig.thinkTimeStrategy.name() == 'RANDOM'}">Random</option>
+                        <option value="PACING" th:selected="${plan.advancedConfig.thinkTimeStrategy.name() == 'PACING'}">Pacing</option>
+                    </select>
+                </div>
+                <div class="form-group" id="thinkTimeMsGroup">
+                    <label>Think Time (ms)</label>
+                    <input type="number" name="thinkTimeMs" class="form-control" th:value="${plan.advancedConfig.thinkTimeMs}" min="0"/>
+                </div>
+                <div class="form-group" id="thinkTimeMinGroup" style="display:none;">
+                    <label>Think Time Min (ms)</label>
+                    <input type="number" name="thinkTimeMin" class="form-control" th:value="${plan.advancedConfig.thinkTimeMin}" min="0"/>
+                </div>
+                <div class="form-group" id="thinkTimeMaxGroup" style="display:none;">
+                    <label>Think Time Max (ms)</label>
+                    <input type="number" name="thinkTimeMax" class="form-control" th:value="${plan.advancedConfig.thinkTimeMax}" min="0"/>
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:0.5rem;padding-top:1.5rem;">
+                    <input type="checkbox" name="discardResponseBody" value="true" id="discardBody" th:checked="${plan.advancedConfig.discardResponseBody}" style="width:auto;"/>
+                    <label for="discardBody" style="margin:0;">Discard Response Body (save memory)</label>
+                </div>
+            </div>
+
+            <div class="form-section">Authentication</div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Auth Mode</label>
+                    <select name="authMode" class="form-control" id="authMode" onchange="toggleAuthTokens()">
+                        <option value="LOGIN_STEP" th:selected="${plan.authConfig.mode.name() == 'LOGIN_STEP'}">Login Step (extract token via Extractor)</option>
+                        <option value="TOKEN_POOL" th:selected="${plan.authConfig.mode.name() == 'TOKEN_POOL'}">Token Pool (pre-configured tokens)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" id="authTokensGroup" style="display:none;">
+                <label>Tokens (one per line, distributed round-robin to VUs as {{token}})</label>
+                <textarea name="authTokens" class="form-control" rows="4" placeholder="eyJhbGciOi...&#10;eyJhbGciOi...&#10;eyJhbGciOi..." th:text="${#strings.listJoin(plan.authConfig.tokens, '&#10;')}"></textarea>
+            </div>
+
+            <div class="form-section">Data Source <span style="font-weight:400;font-size:0.75rem;text-transform:none;letter-spacing:0;">&mdash; optional CSV/JSON file for test data</span></div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>File Path</label>
+                    <input type="text" name="dsFilePath" class="form-control" th:value="${plan.dataSourceConfig?.filePath}" placeholder="/data/users.csv"/>
+                </div>
+                <div class="form-group">
+                    <label>Distribution</label>
+                    <select name="dsDistribution" class="form-control">
+                        <option value="SEQUENTIAL" th:selected="${plan.dataSourceConfig != null && plan.dataSourceConfig.distribution.name() == 'SEQUENTIAL'}">Sequential</option>
+                        <option value="RANDOM" th:selected="${plan.dataSourceConfig != null && plan.dataSourceConfig.distribution.name() == 'RANDOM'}">Random</option>
+                        <option value="CIRCULAR" th:selected="${plan.dataSourceConfig != null && plan.dataSourceConfig.distribution.name() == 'CIRCULAR'}">Circular</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>On EOF</label>
+                    <select name="dsOnEof" class="form-control">
+                        <option value="RECYCLE" th:selected="${plan.dataSourceConfig != null && plan.dataSourceConfig.onEof.name() == 'RECYCLE'}">Recycle</option>
+                        <option value="STOP_VU" th:selected="${plan.dataSourceConfig != null && plan.dataSourceConfig.onEof.name() == 'STOP_VU'}">Stop VU</option>
+                    </select>
                 </div>
             </div>
 
@@ -238,6 +353,33 @@ function addValidatorRow() {
     </div>`;
     document.getElementById('validator-list').insertAdjacentHTML('beforeend', html);
 }
+function addStageRow() {
+    const html = `<div class="stage-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+        <div class="form-group" style="margin-bottom:0;"><label>Duration (s)</label><input type="number" name="stageDuration" class="form-control" min="1" placeholder="60"/></div>
+        <div class="form-group" style="margin-bottom:0;"><label>Target VU</label><input type="number" name="stageTargetVu" class="form-control" min="0" placeholder="50"/></div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.stage-row').remove()" style="margin-bottom:0.25rem;">X</button>
+    </div>`;
+    document.getElementById('stage-list').insertAdjacentHTML('beforeend', html);
+}
+function addThresholdRow() {
+    const html = `<div class="threshold-row" style="display:grid;grid-template-columns:140px 100px 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+        <div class="form-group" style="margin-bottom:0;"><select name="thresholdMetric" class="form-control"><option value="AVG">AVG</option><option value="P50">P50</option><option value="P90">P90</option><option value="P95">P95</option><option value="P99">P99</option><option value="ERROR_RATE">Error Rate</option><option value="TPS">TPS</option></select></div>
+        <div class="form-group" style="margin-bottom:0;"><select name="thresholdOperator" class="form-control"><option value="LT">&lt;</option><option value="LTE">≤</option><option value="GT">&gt;</option><option value="GTE">≥</option></select></div>
+        <div class="form-group" style="margin-bottom:0;"><input type="text" name="thresholdValue" class="form-control" placeholder="100"/></div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.threshold-row').remove()" style="margin-bottom:0.25rem;">X</button>
+    </div>`;
+    document.getElementById('threshold-list').insertAdjacentHTML('beforeend', html);
+}
+function toggleThinkTime() {
+    const s = document.getElementById('thinkTimeStrategy').value;
+    document.getElementById('thinkTimeMsGroup').style.display = (s === 'CONSTANT' || s === 'PACING') ? '' : 'none';
+    document.getElementById('thinkTimeMinGroup').style.display = s === 'RANDOM' ? '' : 'none';
+    document.getElementById('thinkTimeMaxGroup').style.display = s === 'RANDOM' ? '' : 'none';
+}
+function toggleAuthTokens() {
+    document.getElementById('authTokensGroup').style.display = document.getElementById('authMode').value === 'TOKEN_POOL' ? '' : 'none';
+}
+document.addEventListener('DOMContentLoaded', function() { toggleThinkTime(); toggleAuthTokens(); });
 </script>
 </body>
 </html>
