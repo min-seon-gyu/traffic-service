@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Steps')}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<div class="container">
+    <h2>Steps: <span th:text="${plan.name}"></span></h2>
+    <div class="card">
+        <table th:if="${!steps.isEmpty()}">
+            <thead><tr><th>#</th><th>Name</th><th>Method</th><th>Path</th><th>Think Time</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="step : ${steps}">
+                <td th:text="${step.orderIndex}"></td>
+                <td th:text="${step.name}"></td>
+                <td th:text="${step.httpMethod}"></td>
+                <td th:text="${step.path}"></td>
+                <td th:text="${step.thinkTimeMs != null ? step.thinkTimeMs + 'ms' : 'default'}"></td>
+                <td>
+                    <form th:action="@{/plans/{pid}/steps/{sid}/delete(pid=${plan.id},sid=${step.id})}" method="post">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p th:if="${steps.isEmpty()}" style="padding:1rem; color:#999;">No steps yet. Add one below.</p>
+    </div>
+    <div class="card">
+        <h3>Add Step</h3>
+        <form th:action="@{/plans/{id}/steps(id=${plan.id})}" method="post">
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="name" placeholder="e.g. Login" required/>
+                </div>
+                <div class="form-group">
+                    <label>HTTP Method</label>
+                    <select name="httpMethod">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Path</label>
+                    <input type="text" name="path" placeholder="/api/endpoint" required/>
+                </div>
+                <div class="form-group">
+                    <label>Think Time (ms, optional)</label>
+                    <input type="number" name="thinkTimeMs" min="0"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Body (optional, JSON)</label>
+                <textarea name="body" rows="3" placeholder='{"key": "value"}'></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Step</button>
+        </form>
+    </div>
+    <a th:href="@{/plans/{id}(id=${plan.id})}" class="btn btn-secondary" style="margin-top:1rem;">Back to Plan</a>
+</div>
+</body>
+</html>

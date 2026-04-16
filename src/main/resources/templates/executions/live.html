@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Live Dashboard')}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h2>Live Dashboard - Execution #<span th:text="${execution.id}"></span></h2>
+        <form th:action="@{/executions/{id}/abort(id=${execution.id})}" method="post">
+            <button type="submit" class="btn btn-danger" id="abort-btn">Abort</button>
+        </form>
+    </div>
+    <div class="metric-cards">
+        <div class="card metric-card"><div class="value" id="tps">-</div><div class="label">TPS</div></div>
+        <div class="card metric-card"><div class="value" id="avg-latency">-</div><div class="label">Avg Latency</div></div>
+        <div class="card metric-card"><div class="value" id="error-rate">-</div><div class="label">Error Rate</div></div>
+        <div class="card metric-card"><div class="value" id="current-vu">-</div><div class="label">Active VU</div></div>
+    </div>
+    <div class="card">
+        <h3>Response Time</h3>
+        <canvas id="latency-chart" height="200"></canvas>
+    </div>
+    <div class="card">
+        <h3>TPS</h3>
+        <canvas id="tps-chart" height="200"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script th:inline="javascript">
+    const executionId = [[${execution.id}]];
+    const maxDataPoints = 120;
+
+    const latencyData = { labels: [], datasets: [{ label: 'Avg (ms)', data: [], borderColor: '#4361ee', fill: false, tension: 0.3 }] };
+    const tpsData = { labels: [], datasets: [{ label: 'TPS', data: [], borderColor: '#2a9d8f', fill: false, tension: 0.3 }] };
+
+    const chartOpts = { responsive: true, animation: false, scales: { x: { display: false } } };
+    const latencyChart = new Chart(document.getElementById('latency-chart'), { type: 'line', data: latencyData, options: chartOpts });
+    const tpsChart = new Chart(document.getElementById('tps-chart'), { type: 'line', data: tpsData, options: chartOpts });
+
+    const eventSource = new EventSource(`/executions/${executionId}/stream`);
+
+    eventSource.addEventListener('metric', function(e) {
+        const metrics = JSON.parse(e.data);
+        const overall = metrics.find(m => m.stepName === null);
+        if (!overall) return;
+
+        const now = new Date().toLocaleTimeString();
+
+        document.getElementById('tps').textContent = overall.tps.toFixed(1);
+        document.getElementById('avg-latency').textContent = overall.avgResponseTime.toFixed(1) + 'ms';
+        document.getElementById('current-vu').textContent = overall.currentVu;
+
+        const errRate = overall.requestCount > 0 ? ((overall.errorCount / overall.requestCount) * 100).toFixed(1) : '0.0';
+        document.getElementById('error-rate').textContent = errRate + '%';
+
+        latencyData.labels.push(now);
+        latencyData.datasets[0].data.push(overall.avgResponseTime);
+        tpsData.labels.push(now);
+        tpsData.datasets[0].data.push(overall.tps);
+
+        if (latencyData.labels.length > maxDataPoints) { latencyData.labels.shift(); latencyData.datasets[0].data.shift(); }
+        if (tpsData.labels.length > maxDataPoints) { tpsData.labels.shift(); tpsData.datasets[0].data.shift(); }
+
+        latencyChart.update();
+        tpsChart.update();
+    });
+
+    eventSource.addEventListener('complete', function() {
+        eventSource.close();
+        document.getElementById('abort-btn').disabled = true;
+        document.getElementById('abort-btn').textContent = 'Completed';
+        setTimeout(() => window.location.href = `/executions/${executionId}`, 2000);
+    });
+
+    eventSource.onerror = function() { eventSource.close(); };
+</script>
+</body>
+</html>

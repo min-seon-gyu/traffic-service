@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Plan')}"></head>
+<body>
+<nav th:replace="~{layout :: nav}"></nav>
+<div class="container">
+    <h2 th:text="${isNew} ? 'New Test Plan' : 'Edit: ' + ${plan.name}"></h2>
+    <div class="card">
+        <form th:action="${isNew} ? @{/plans} : @{/plans/{id}(id=${plan.id})}" method="post">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" name="name" th:value="${plan.name}" required/>
+            </div>
+            <div class="form-group">
+                <label>Target Base URL</label>
+                <input type="text" name="targetBaseUrl" th:value="${plan.targetBaseUrl}" placeholder="https://api.example.com" required/>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" rows="2" th:text="${plan.description}"></textarea>
+            </div>
+            <h3 style="margin: 1.5rem 0 1rem;">Load Config</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Virtual Users (VU)</label>
+                    <input type="number" name="vuCount" th:value="${plan.loadConfig.vuCount}" min="1"/>
+                </div>
+                <div class="form-group">
+                    <label>Requests per VU (empty = duration-based)</label>
+                    <input type="number" name="requestsPerVu" th:value="${plan.loadConfig.requestsPerVu}" min="1"/>
+                </div>
+                <div class="form-group">
+                    <label>Ramp-up (seconds)</label>
+                    <input type="number" name="rampUpSeconds" th:value="${plan.loadConfig.rampUpSeconds}" min="0"/>
+                </div>
+                <div class="form-group">
+                    <label>Duration (seconds, empty = request-based)</label>
+                    <input type="number" name="durationSeconds" th:value="${plan.loadConfig.durationSeconds}" min="1"/>
+                </div>
+                <div class="form-group">
+                    <label>Max Duration (seconds)</label>
+                    <input type="number" name="maxDuration" th:value="${plan.loadConfig.maxDuration}" min="1"/>
+                </div>
+            </div>
+            <h3 style="margin: 1.5rem 0 1rem;">Safety</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Abort on Error Rate (%)</label>
+                    <input type="number" name="abortOnErrorRate" th:value="${plan.safetyConfig.abortOnErrorRate}" min="1" max="100"/>
+                </div>
+                <div class="form-group">
+                    <label>Graceful Stop Timeout (seconds)</label>
+                    <input type="number" name="gracefulStopTimeout" th:value="${plan.safetyConfig.gracefulStopTimeout}" min="0"/>
+                </div>
+                <div class="form-group">
+                    <label>Request Timeout (ms)</label>
+                    <input type="number" name="timeoutMs" th:value="${plan.advancedConfig.timeoutMs}" min="100"/>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" th:text="${isNew} ? 'Create' : 'Save'">Save</button>
+        </form>
+    </div>
+    <div th:unless="${isNew}" class="card" style="margin-top:1rem;">
+        <h3>Scenario Steps</h3>
+        <p th:if="${steps != null && !steps.isEmpty()}" th:text="${#lists.size(steps)} + ' steps configured'"></p>
+        <p th:if="${steps == null || steps.isEmpty()}">No steps yet.</p>
+        <a th:href="@{/plans/{id}/steps(id=${plan.id})}" class="btn btn-secondary">Edit Steps</a>
+    </div>
+</div>
+</body>
+</html>
