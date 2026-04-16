@@ -18,44 +18,44 @@
         <form th:action="${isNew} ? @{/plans} : @{/plans/{id}(id=${plan.id})}" method="post">
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Name</label>
+                    <label>Name <span class="tip" data-tip="테스트 플랜의 이름입니다.">?</span></label>
                     <input type="text" name="name" class="form-control" th:value="${plan.name}" placeholder="e.g. User Login Flow" required/>
                 </div>
                 <div class="form-group">
-                    <label>Target Base URL</label>
+                    <label>Target Base URL <span class="tip" data-tip="부하를 보낼 대상 서버의 기본 URL입니다. (예: https://api.example.com)">?</span></label>
                     <input type="text" name="targetBaseUrl" class="form-control" th:value="${plan.targetBaseUrl}" placeholder="https://api.example.com" required/>
                 </div>
             </div>
             <div class="form-group">
-                <label>Description</label>
+                <label>Description <span class="tip" data-tip="테스트 목적이나 시나리오에 대한 설명입니다.">?</span></label>
                 <textarea name="description" class="form-control" rows="2" th:text="${plan.description}" placeholder="Optional description for this test plan..."></textarea>
             </div>
 
             <div class="form-section">Load Configuration</div>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Virtual Users (VU)</label>
+                    <label>Virtual Users (VU) <span class="tip" data-tip="동시에 요청을 보내는 가상 사용자 수입니다.">?</span></label>
                     <input type="number" name="vuCount" class="form-control" th:value="${plan.loadConfig.vuCount}" min="1"/>
                 </div>
                 <div class="form-group">
-                    <label>Requests per VU (empty = duration-based)</label>
+                    <label>Requests per VU <span class="tip" data-tip="각 VU가 보내는 총 요청 수입니다. 비워두면 Duration 기반으로 동작합니다.">?</span></label>
                     <input type="number" name="requestsPerVu" class="form-control" th:value="${plan.loadConfig.requestsPerVu}" min="1"/>
                 </div>
                 <div class="form-group">
-                    <label>Ramp-up (seconds)</label>
+                    <label>Ramp-up (seconds) <span class="tip" data-tip="VU를 점진적으로 늘리는 시간(초)입니다. 0이면 모든 VU가 동시에 시작합니다.">?</span></label>
                     <input type="number" name="rampUpSeconds" class="form-control" th:value="${plan.loadConfig.rampUpSeconds}" min="0"/>
                 </div>
                 <div class="form-group">
-                    <label>Duration (seconds, empty = request-based)</label>
+                    <label>Duration (seconds) <span class="tip" data-tip="테스트 지속 시간(초)입니다. 비워두면 Requests per VU 기반으로 동작합니다.">?</span></label>
                     <input type="number" name="durationSeconds" class="form-control" th:value="${plan.loadConfig.durationSeconds}" min="1"/>
                 </div>
                 <div class="form-group">
-                    <label>Max Duration (seconds)</label>
+                    <label>Max Duration (seconds) <span class="tip" data-tip="테스트의 최대 허용 시간(초)입니다. 이 시간이 지나면 강제 종료됩니다.">?</span></label>
                     <input type="number" name="maxDuration" class="form-control" th:value="${plan.loadConfig.maxDuration}" min="1"/>
                 </div>
             </div>
 
-            <div class="form-section">Stages <span style="font-weight:400;font-size:0.75rem;text-transform:none;letter-spacing:0;">&mdash; define variable load profile (overrides VU/Duration above if set)</span></div>
+            <div class="form-section">Stages <span class="tip" data-tip="가변 부하 프로파일을 정의합니다. 설정하면 위의 VU/Duration보다 우선 적용됩니다.">?</span></div>
             <div id="stage-list">
                 <div th:if="${!isNew}" th:each="stage : ${plan.loadConfig.stages}" class="stage-row" style="display:grid;grid-template-columns:1fr 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
                     <div class="form-group" style="margin-bottom:0;">
@@ -74,16 +74,16 @@
             <div class="form-section">Safety</div>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Abort on Error Rate (%)</label>
+                    <label>Abort on Error Rate (%) <span class="tip" data-tip="에러율이 이 값을 초과하면 테스트를 자동으로 중단합니다.">?</span></label>
                     <input type="number" name="abortOnErrorRate" class="form-control" th:value="${plan.safetyConfig.abortOnErrorRate}" min="1" max="100"/>
                 </div>
                 <div class="form-group">
-                    <label>Graceful Stop Timeout (seconds)</label>
+                    <label>Graceful Stop Timeout (s) <span class="tip" data-tip="테스트 중단 시 진행 중인 요청을 기다리는 최대 시간(초)입니다.">?</span></label>
                     <input type="number" name="gracefulStopTimeout" class="form-control" th:value="${plan.safetyConfig.gracefulStopTimeout}" min="0"/>
                 </div>
             </div>
 
-            <div class="form-section">Thresholds <span style="font-weight:400;font-size:0.75rem;text-transform:none;letter-spacing:0;">&mdash; auto Pass/Fail based on metrics</span></div>
+            <div class="form-section">Thresholds <span class="tip" data-tip="성능 기준을 설정합니다. 모든 조건을 충족하면 Pass, 아니면 Fail로 판정됩니다.">?</span></div>
             <div id="threshold-list">
                 <div th:if="${!isNew}" th:each="th : ${plan.thresholds}" class="threshold-row" style="display:grid;grid-template-columns:140px 100px 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
                     <div class="form-group" style="margin-bottom:0;">
@@ -119,11 +119,11 @@
             <div class="form-section">Advanced</div>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Request Timeout (ms)</label>
+                    <label>Request Timeout (ms) <span class="tip" data-tip="개별 HTTP 요청의 최대 대기 시간(ms)입니다. 초과하면 실패로 처리됩니다.">?</span></label>
                     <input type="number" name="timeoutMs" class="form-control" th:value="${plan.advancedConfig.timeoutMs}" min="100"/>
                 </div>
                 <div class="form-group">
-                    <label>Think Time Strategy</label>
+                    <label>Think Time Strategy <span class="tip" data-tip="스텝 사이 대기 방식입니다. Constant(고정 시간), Random(랜덤 범위), Pacing(반복 전체 시간 기준 조절).">?</span></label>
                     <select name="thinkTimeStrategy" class="form-control" id="thinkTimeStrategy" onchange="toggleThinkTime()">
                         <option value="CONSTANT" th:selected="${plan.advancedConfig.thinkTimeStrategy.name() == 'CONSTANT'}">Constant</option>
                         <option value="RANDOM" th:selected="${plan.advancedConfig.thinkTimeStrategy.name() == 'RANDOM'}">Random</option>
@@ -144,14 +144,14 @@
                 </div>
                 <div class="form-group" style="display:flex;align-items:center;gap:0.5rem;padding-top:1.5rem;">
                     <input type="checkbox" name="discardResponseBody" value="true" id="discardBody" th:checked="${plan.advancedConfig.discardResponseBody}" style="width:auto;"/>
-                    <label for="discardBody" style="margin:0;">Discard Response Body (save memory)</label>
+                    <label for="discardBody" style="margin:0;">Discard Response Body <span class="tip" data-tip="응답 본문을 버려 메모리를 절약합니다. Extractor를 사용하지 않을 때 활성화하세요.">?</span></label>
                 </div>
             </div>
 
             <div class="form-section">Authentication</div>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>Auth Mode</label>
+                    <label>Auth Mode <span class="tip" data-tip="Login Step: 스텝에서 로그인 후 Extractor로 토큰 추출. Token Pool: 미리 발급된 토큰을 VU에 라운드 로빈으로 분배합니다.">?</span></label>
                     <select name="authMode" class="form-control" id="authMode" onchange="toggleAuthTokens()">
                         <option value="LOGIN_STEP" th:selected="${plan.authConfig.mode.name() == 'LOGIN_STEP'}">Login Step (extract token via Extractor)</option>
                         <option value="TOKEN_POOL" th:selected="${plan.authConfig.mode.name() == 'TOKEN_POOL'}">Token Pool (pre-configured tokens)</option>
@@ -159,18 +159,18 @@
                 </div>
             </div>
             <div class="form-group" id="authTokensGroup" style="display:none;">
-                <label>Tokens (one per line, distributed round-robin to VUs as {{token}})</label>
+                <label>Tokens <span class="tip" data-tip="한 줄에 하나씩 토큰을 입력합니다. VU에 라운드 로빈으로 배분되며, 스텝에서 {{token}}으로 참조합니다.">?</span></label>
                 <textarea name="authTokens" class="form-control" rows="4" placeholder="eyJhbGciOi...&#10;eyJhbGciOi...&#10;eyJhbGciOi..." th:text="${#strings.listJoin(plan.authConfig.tokens, '&#10;')}"></textarea>
             </div>
 
-            <div class="form-section">Data Source <span style="font-weight:400;font-size:0.75rem;text-transform:none;letter-spacing:0;">&mdash; optional CSV/JSON file for test data</span></div>
+            <div class="form-section">Data Source <span class="tip" data-tip="외부 CSV/JSON 파일에서 테스트 데이터를 읽어 VU에 분배합니다.">?</span></div>
             <div class="grid-2">
                 <div class="form-group">
-                    <label>File Path</label>
+                    <label>File Path <span class="tip" data-tip="테스트 데이터가 담긴 CSV/JSON 파일의 경로입니다.">?</span></label>
                     <input type="text" name="dsFilePath" class="form-control" th:value="${plan.dataSourceConfig?.filePath}" placeholder="/data/users.csv"/>
                 </div>
                 <div class="form-group">
-                    <label>Distribution</label>
+                    <label>Distribution <span class="tip" data-tip="데이터 분배 방식입니다. Sequential(순차), Random(랜덤), Circular(순환 반복).">?</span></label>
                     <select name="dsDistribution" class="form-control">
                         <option value="SEQUENTIAL" th:selected="${plan.dataSourceConfig != null && plan.dataSourceConfig.distribution.name() == 'SEQUENTIAL'}">Sequential</option>
                         <option value="RANDOM" th:selected="${plan.dataSourceConfig != null && plan.dataSourceConfig.distribution.name() == 'RANDOM'}">Random</option>
@@ -178,7 +178,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>On EOF</label>
+                    <label>On EOF <span class="tip" data-tip="파일 끝에 도달했을 때 동작입니다. Recycle(처음부터 반복), Stop VU(해당 VU 중단).">?</span></label>
                     <select name="dsOnEof" class="form-control">
                         <option value="RECYCLE" th:selected="${plan.dataSourceConfig != null && plan.dataSourceConfig.onEof.name() == 'RECYCLE'}">Recycle</option>
                         <option value="STOP_VU" th:selected="${plan.dataSourceConfig != null && plan.dataSourceConfig.onEof.name() == 'STOP_VU'}">Stop VU</option>
@@ -246,11 +246,11 @@
             <form th:action="@{/plans/{id}/steps(id=${plan.id})}" method="post">
                 <div class="grid-2">
                     <div class="form-group">
-                        <label>Name</label>
+                        <label>Name <span class="tip" data-tip="스텝의 이름입니다. (예: Login, Get Profile)">?</span></label>
                         <input type="text" name="name" class="form-control" placeholder="e.g. Login" required/>
                     </div>
                     <div class="form-group">
-                        <label>HTTP Method</label>
+                        <label>HTTP Method <span class="tip" data-tip="요청에 사용할 HTTP 메서드입니다.">?</span></label>
                         <select name="httpMethod" class="form-control">
                             <option value="GET">GET</option>
                             <option value="POST">POST</option>
@@ -259,24 +259,24 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Path</label>
+                        <label>Path <span class="tip" data-tip="요청 경로입니다. {{변수명}}으로 이전 스텝에서 추출한 값을 사용할 수 있습니다.">?</span></label>
                         <input type="text" name="path" class="form-control" placeholder="/api/endpoint" required/>
                     </div>
                     <div class="form-group">
-                        <label>Think Time (ms, optional)</label>
+                        <label>Think Time (ms) <span class="tip" data-tip="이 스텝 실행 후 다음 스텝까지 대기 시간(ms)입니다. 비워두면 글로벌 설정을 따릅니다.">?</span></label>
                         <input type="number" name="thinkTimeMs" class="form-control" min="0"/>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Headers (JSON)</label>
+                    <label>Headers (JSON) <span class="tip" data-tip="HTTP 요청 헤더를 JSON으로 입력합니다. {{변수명}} 사용 가능합니다.">?</span></label>
                     <textarea name="headers" class="form-control" rows="2" placeholder='{"Content-Type": "application/json", "Authorization": "Bearer token"}'></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Body (JSON)</label>
+                    <label>Body (JSON) <span class="tip" data-tip="HTTP 요청 본문을 JSON으로 입력합니다. {{변수명}} 사용 가능합니다.">?</span></label>
                     <textarea name="body" class="form-control" rows="3" placeholder='{"key": "value"}'></textarea>
                 </div>
 
-                <div class="form-section">Extractors <span style="font-weight:400;font-size:0.75rem;text-transform:none;letter-spacing:0;">&mdash; extract values from response to use in next steps as {{variableName}}</span></div>
+                <div class="form-section">Extractors <span class="tip" data-tip="응답에서 값을 추출하여 변수로 저장합니다. 이후 스텝에서 {{변수명}}으로 참조할 수 있습니다.">?</span></div>
                 <div id="extractor-list">
                     <div class="extractor-row" style="display:grid;grid-template-columns:120px 1fr 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
                         <div class="form-group" style="margin-bottom:0;">
@@ -299,7 +299,7 @@
                 </div>
                 <button type="button" class="btn btn-ghost btn-sm" onclick="addExtractorRow()" style="margin-bottom:1.25rem;">+ Add Extractor</button>
 
-                <div class="form-section">Validators <span style="font-weight:400;font-size:0.75rem;text-transform:none;letter-spacing:0;">&mdash; verify response matches expected values</span></div>
+                <div class="form-section">Validators <span class="tip" data-tip="응답이 기대한 값과 일치하는지 검증합니다. 실패하면 해당 요청이 에러로 처리됩니다.">?</span></div>
                 <div id="validator-list">
                     <div class="validator-row" style="display:grid;grid-template-columns:160px 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
                         <div class="form-group" style="margin-bottom:0;">

@@ -172,6 +172,36 @@
         .badge-put { background: var(--warning-dim); color: var(--warning); }
         .badge-delete { background: var(--danger-dim); color: var(--danger); }
 
+        /* TOOLTIP */
+        .tip {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 14px; height: 14px; border-radius: 50%;
+            background: rgba(99,179,237,0.1); color: var(--text-muted);
+            font-size: 0.55rem; font-weight: 700; cursor: help;
+            margin-left: 0.3rem; position: relative;
+            font-family: 'JetBrains Mono', monospace;
+            vertical-align: middle; flex-shrink: 0;
+        }
+        .tip:hover::after {
+            content: attr(data-tip);
+            position: absolute; bottom: calc(100% + 6px); left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-deep); border: 1px solid var(--border);
+            color: var(--text-primary); padding: 0.5rem 0.75rem;
+            border-radius: 8px; font-size: 0.78rem; font-weight: 400;
+            white-space: normal; width: 260px; z-index: 200;
+            line-height: 1.5; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            font-family: 'DM Sans', sans-serif; letter-spacing: 0;
+            text-transform: none;
+        }
+        .tip:hover::before {
+            content: '';
+            position: absolute; bottom: calc(100% + 2px); left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent; border-top-color: var(--border);
+            z-index: 201;
+        }
+
         /* BUTTONS */
         .btn {
             font-family: 'DM Sans', sans-serif;

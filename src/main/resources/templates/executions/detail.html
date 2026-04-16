@@ -17,25 +17,25 @@
     <div class="metric-grid fade-up">
         <div class="metric-item">
             <div class="metric-value accent" th:text="${execution.totalRequests}"></div>
-            <div class="metric-label">Total Requests</div>
+            <div class="metric-label">Total Requests <span class="tip" data-tip="테스트 동안 보낸 총 요청 수입니다.">?</span></div>
         </div>
         <div class="metric-item violet">
             <div class="metric-value violet" th:text="${#numbers.formatDecimal(execution.avgResponseTime, 0, 1)} + 'ms'"></div>
-            <div class="metric-label">Avg Response Time</div>
+            <div class="metric-label">Avg Response Time <span class="tip" data-tip="전체 요청의 평균 응답 시간입니다.">?</span></div>
         </div>
         <div class="metric-item success">
             <div class="metric-value success" th:text="${#numbers.formatDecimal(execution.tps, 0, 1)}"></div>
-            <div class="metric-label">TPS</div>
+            <div class="metric-label">TPS <span class="tip" data-tip="초당 처리된 평균 요청 수(Transactions Per Second)입니다.">?</span></div>
         </div>
         <div class="metric-item warning">
             <div class="metric-value" th:text="${#numbers.formatDecimal(execution.errorRate, 0, 1)} + '%'"
                  th:styleappend="${execution.errorRate > 5 ? 'color:var(--danger)' : 'color:var(--success)'}"></div>
-            <div class="metric-label">Error Rate</div>
+            <div class="metric-label">Error Rate <span class="tip" data-tip="전체 요청 중 실패한 요청의 비율(%)입니다.">?</span></div>
         </div>
     </div>
 
     <div class="card fade-up">
-        <div class="card-header"><h3>Response Time Distribution</h3></div>
+        <div class="card-header"><h3>Response Time Distribution <span class="tip" data-tip="응답 시간의 퍼센타일 분포입니다. P50은 절반의 요청이 이 시간 이내, P99는 99%가 이 시간 이내에 응답했음을 의미합니다.">?</span></h3></div>
         <div class="percentile-grid">
             <div class="percentile-item">
                 <div class="percentile-label">p50</div>

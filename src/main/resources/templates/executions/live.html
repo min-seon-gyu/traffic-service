@@ -90,29 +90,29 @@
     <!-- Real-time metric strip -->
     <div class="rt-strip fade-up">
         <div class="rt-item cyan">
-            <div class="rt-label">TPS</div>
+            <div class="rt-label">TPS <span class="tip" data-tip="초당 처리된 요청 수(Transactions Per Second)입니다.">?</span></div>
             <div class="rt-value cyan" id="tps">-</div>
         </div>
         <div class="rt-item violet">
-            <div class="rt-label">Avg Latency</div>
+            <div class="rt-label">Avg Latency <span class="tip" data-tip="현재 구간의 평균 응답 시간입니다.">?</span></div>
             <div class="rt-value violet" id="avg-latency">-</div>
         </div>
         <div class="rt-item green">
-            <div class="rt-label">Active VU</div>
+            <div class="rt-label">Active VU <span class="tip" data-tip="현재 요청을 보내고 있는 가상 사용자 수입니다.">?</span></div>
             <div class="rt-value green" id="current-vu">-</div>
         </div>
         <div class="rt-item cyan">
-            <div class="rt-label">Total Requests</div>
+            <div class="rt-label">Total Requests <span class="tip" data-tip="테스트 시작 이후 누적 총 요청 수입니다.">?</span></div>
             <div class="rt-value cyan" id="total-req">0</div>
             <div class="rt-sub"><span style="color:var(--success)" id="ok-count">0</span> ok &middot; <span style="color:var(--danger)" id="fail-count">0</span> fail</div>
         </div>
         <div class="rt-item green">
-            <div class="rt-label">Error Rate</div>
+            <div class="rt-label">Error Rate <span class="tip" data-tip="전체 요청 중 실패한 요청의 비율(%)입니다.">?</span></div>
             <div class="rt-value green" id="error-rate">0.0%</div>
             <div class="progress-bar"><div class="progress-fill" id="err-bar" style="width:0%;background:var(--success);"></div></div>
         </div>
         <div class="rt-item warn">
-            <div class="rt-label">P95 Latency</div>
+            <div class="rt-label">P95 Latency <span class="tip" data-tip="요청의 95%가 이 시간 이내에 응답했음을 나타냅니다. 상위 5% 느린 요청을 감지하는 데 유용합니다.">?</span></div>
             <div class="rt-value warn" id="p95">-</div>
         </div>
     </div>
