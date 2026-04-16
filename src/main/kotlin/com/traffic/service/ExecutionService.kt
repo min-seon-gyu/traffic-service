@@ -10,6 +10,7 @@ import com.traffic.engine.StepExecutor
 import com.traffic.engine.StepSpec
 import com.traffic.metric.AggregatedMetric
 import com.traffic.metric.MetricBuffer
+import jakarta.annotation.PostConstruct
 import jakarta.transaction.Transactional
 import kotlinx.coroutines.*
 import org.springframework.stereotype.Service
@@ -26,6 +27,16 @@ class ExecutionService(
 ) {
     private val runningEngines = ConcurrentHashMap<Long, LoadEngine>()
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    @PostConstruct
+    fun cleanupOrphanedExecutions() {
+        val orphaned = executionRepository.findAll().filter { it.status == ExecutionStatus.RUNNING }
+        orphaned.forEach {
+            it.status = ExecutionStatus.ABORTED
+            it.finishedAt = it.finishedAt ?: LocalDateTime.now()
+            executionRepository.save(it)
+        }
+    }
 
     fun startExecution(plan: TestPlan): TestExecution {
         val execution = executionRepository.save(
@@ -79,6 +90,12 @@ class ExecutionService(
 
     fun abortExecution(executionId: Long) {
         runningEngines[executionId]?.abort()
+        val execution = executionRepository.findById(executionId).orElse(null) ?: return
+        if (execution.status == ExecutionStatus.RUNNING) {
+            execution.status = ExecutionStatus.ABORTED
+            execution.finishedAt = LocalDateTime.now()
+            executionRepository.save(execution)
+        }
     }
 
     fun getExecution(id: Long): TestExecution? = executionRepository.findById(id).orElse(null)
