@@ -97,13 +97,14 @@ class LoadEngine(
         }
         vuJobs.addAll(jobs)
 
-        scope.launch {
+        val maxDurationJob = scope.launch {
             delay(loadConfig.maxDuration * 1000L)
             abort()
             jobs.forEach { it.cancel() }
         }
 
         jobs.joinAll()
+        maxDurationJob.cancel()
     }
 
     private suspend fun runWithStages(
