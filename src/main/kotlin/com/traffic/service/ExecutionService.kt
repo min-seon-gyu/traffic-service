@@ -10,6 +10,7 @@ import com.traffic.engine.StepExecutor
 import com.traffic.engine.StepSpec
 import com.traffic.metric.AggregatedMetric
 import com.traffic.metric.MetricBuffer
+import jakarta.transaction.Transactional
 import kotlinx.coroutines.*
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -83,6 +84,14 @@ class ExecutionService(
     fun getExecution(id: Long): TestExecution? = executionRepository.findById(id).orElse(null)
 
     fun getAllExecutions(): List<TestExecution> = executionRepository.findAllByOrderByStartedAtDesc()
+
+    @Transactional
+    fun deleteExecution(id: Long) {
+        runningEngines[id]?.abort()
+        runningEngines.remove(id)
+        snapshotRepository.deleteByExecutionId(id)
+        executionRepository.deleteById(id)
+    }
 
     private fun handleMetricSnapshot(executionId: Long, metrics: List<AggregatedMetric>) {
         metrics.forEach { metric ->

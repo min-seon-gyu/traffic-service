@@ -40,4 +40,10 @@ class ExecutionController(
         executionService.abortExecution(id)
         return "redirect:/executions/$id/live"
     }
+
+    @PostMapping("/{id}/delete")
+    fun delete(@PathVariable id: Long): String {
+        executionService.deleteExecution(id)
+        return "redirect:/executions"
+    }
 }

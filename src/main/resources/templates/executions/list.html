@@ -26,8 +26,13 @@
                 <td class="mono" th:text="${#numbers.formatDecimal(exec.errorRate, 0, 1) + '%'}"></td>
                 <td style="color:var(--text-muted);font-size:0.85rem" th:text="${#temporals.format(exec.startedAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
                 <td>
-                    <a th:if="${exec.status.name() == 'RUNNING'}" th:href="@{/executions/{id}/live(id=${exec.id})}" class="btn btn-primary btn-sm">Live</a>
-                    <a th:unless="${exec.status.name() == 'RUNNING'}" th:href="@{/executions/{id}(id=${exec.id})}" class="btn btn-ghost btn-sm">Detail</a>
+                    <div class="btn-group">
+                        <a th:if="${exec.status.name() == 'RUNNING'}" th:href="@{/executions/{id}/live(id=${exec.id})}" class="btn btn-primary btn-sm">Live</a>
+                        <a th:unless="${exec.status.name() == 'RUNNING'}" th:href="@{/executions/{id}(id=${exec.id})}" class="btn btn-ghost btn-sm">Detail</a>
+                        <form th:action="@{/executions/{id}/delete(id=${exec.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">Del</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             </tbody>
