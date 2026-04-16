@@ -74,22 +74,24 @@ class LoadEngine(
                 }
                 if (aborted.get()) return@launch
 
-                val initialVars = buildInitialVariables(authConfig, index)
-                val vu = VirtualUser(
-                    id = index,
-                    steps = steps,
-                    baseUrl = baseUrl,
-                    advancedConfig = advancedConfig,
-                    stepExecutor = stepExecutor,
-                    metricBuffer = metricBuffer,
-                    initialVariables = initialVars
-                )
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    val initialVars = buildInitialVariables(authConfig, index)
+                    val vu = VirtualUser(
+                        id = index,
+                        steps = steps,
+                        baseUrl = baseUrl,
+                        advancedConfig = advancedConfig,
+                        stepExecutor = stepExecutor,
+                        metricBuffer = metricBuffer,
+                        initialVariables = initialVars
+                    )
 
-                activeVuCount.incrementAndGet()
-                try {
-                    vu.run(requestCount = loadConfig.requestsPerVu, durationMs = durationMs)
-                } finally {
-                    activeVuCount.decrementAndGet()
+                    activeVuCount.incrementAndGet()
+                    try {
+                        vu.run(requestCount = loadConfig.requestsPerVu, durationMs = durationMs)
+                    } finally {
+                        activeVuCount.decrementAndGet()
+                    }
                 }
             }
         }
@@ -130,12 +132,14 @@ class LoadEngine(
                     val vuId = vuIdCounter++
                     val initialVars = buildInitialVariables(authConfig, vuId)
                     val job = scope.launch {
-                        val vu = VirtualUser(vuId, steps, baseUrl, advancedConfig, stepExecutor, metricBuffer, initialVars)
-                        activeVuCount.incrementAndGet()
-                        try {
-                            vu.run(durationMs = Long.MAX_VALUE)
-                        } finally {
-                            activeVuCount.decrementAndGet()
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            val vu = VirtualUser(vuId, steps, baseUrl, advancedConfig, stepExecutor, metricBuffer, initialVars)
+                            activeVuCount.incrementAndGet()
+                            try {
+                                vu.run(durationMs = Long.MAX_VALUE)
+                            } finally {
+                                activeVuCount.decrementAndGet()
+                            }
                         }
                     }
                     activeJobs.add(job)
