@@ -62,7 +62,7 @@ class ExecutionController(
     @PostMapping("/{id}/abort")
     fun abort(@PathVariable id: Long): String {
         executionService.abortExecution(id)
-        return "redirect:/executions/$id/live"
+        return "redirect:/executions"
     }
 
     @PostMapping("/{id}/delete")
