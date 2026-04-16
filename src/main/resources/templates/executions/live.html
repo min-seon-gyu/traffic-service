@@ -3,116 +3,248 @@
 <head th:replace="~{layout :: head('Live Dashboard')}"></head>
 <body>
 <nav th:replace="~{layout :: nav}"></nav>
-<div class="container">
-    <div class="page-header fade-up">
+<style>
+    .rt-strip {
+        display: grid; grid-template-columns: repeat(6, 1fr);
+        gap: 0.5rem; margin-bottom: 0.75rem;
+    }
+    .rt-item {
+        background: var(--bg-card); border: 1px solid var(--border);
+        border-radius: var(--radius-sm); padding: 0.75rem 0.9rem;
+        position: relative; overflow: hidden;
+    }
+    .rt-item::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; opacity: 0.6;
+    }
+    .rt-item.cyan::before { background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+    .rt-item.violet::before { background: linear-gradient(90deg, transparent, var(--violet), transparent); }
+    .rt-item.green::before { background: linear-gradient(90deg, transparent, var(--success), transparent); }
+    .rt-item.warn::before { background: linear-gradient(90deg, transparent, var(--warning), transparent); }
+    .rt-label {
+        font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+        color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em;
+        margin-bottom: 0.25rem;
+    }
+    .rt-value {
+        font-family: 'Sora', sans-serif; font-size: 1.35rem; font-weight: 700;
+        letter-spacing: -0.03em;
+    }
+    .rt-value.cyan { color: var(--accent); }
+    .rt-value.violet { color: var(--violet); }
+    .rt-value.green { color: var(--success); }
+    .rt-value.warn { color: var(--warning); }
+    .rt-sub {
+        font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+        color: var(--text-muted); margin-top: 0.15rem;
+    }
+    .chart-grid {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 0.75rem; margin-bottom: 0.75rem;
+    }
+    .elapsed {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.82rem; color: var(--text-secondary);
+    }
+    .step-table { width: 100%; border-collapse: collapse; }
+    .step-table thead th {
+        font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+        font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;
+        color: var(--text-muted); padding: 0.5rem 0.75rem; text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+    .step-table tbody td {
+        padding: 0.55rem 0.75rem; font-size: 0.82rem;
+        border-bottom: 1px solid rgba(99,179,237,0.04);
+    }
+    .step-table tbody tr:hover { background: rgba(255,255,255,0.01); }
+    .latency-bar-bg {
+        height: 6px; background: var(--bg-surface); border-radius: 3px;
+        width: 70px; display: inline-block; vertical-align: middle; margin-left: 0.4rem;
+    }
+    .latency-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+    .progress-bar { height: 3px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; margin-top: 0.4rem; }
+    .progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+</style>
+
+<div class="container" style="max-width:1400px;">
+    <!-- Header -->
+    <div class="page-header fade-up" style="margin-bottom:1rem;">
         <div>
-            <div style="display:flex; align-items:center; gap:1rem;">
-                <h2>Live Dashboard</h2>
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+                <h2>Execution #<span th:text="${execution.id}"></span></h2>
                 <span class="live-indicator">LIVE</span>
+                <span class="elapsed" id="elapsed">00:00</span>
             </div>
-            <p class="subtitle">Execution #<span th:text="${execution.id}"></span></p>
+            <p class="subtitle">
+                <span th:if="${plan != null}" th:text="${plan.name}">Plan</span>
+                <span th:if="${plan != null}"> &mdash; </span>
+                <span th:if="${plan != null}" th:text="${plan.loadConfig.vuCount} + ' VU'"></span>
+                <span th:if="${plan != null && plan.loadConfig.durationSeconds != null}" th:text="' / ' + ${plan.loadConfig.durationSeconds} + 's'"></span>
+            </p>
         </div>
         <form th:action="@{/executions/{id}/abort(id=${execution.id})}" method="post">
             <button type="submit" class="btn btn-danger-solid" id="abort-btn">Abort</button>
         </form>
     </div>
 
-    <div class="metric-grid fade-up">
-        <div class="metric-item">
-            <div class="metric-value accent" id="tps">-</div>
-            <div class="metric-label">TPS</div>
+    <!-- Real-time metric strip -->
+    <div class="rt-strip fade-up">
+        <div class="rt-item cyan">
+            <div class="rt-label">TPS</div>
+            <div class="rt-value cyan" id="tps">-</div>
         </div>
-        <div class="metric-item violet">
-            <div class="metric-value violet" id="avg-latency">-</div>
-            <div class="metric-label">Avg Latency</div>
+        <div class="rt-item violet">
+            <div class="rt-label">Avg Latency</div>
+            <div class="rt-value violet" id="avg-latency">-</div>
         </div>
-        <div class="metric-item warning">
-            <div class="metric-value" id="error-rate" style="color:var(--success)">-</div>
-            <div class="metric-label">Error Rate</div>
+        <div class="rt-item green">
+            <div class="rt-label">Active VU</div>
+            <div class="rt-value green" id="current-vu">-</div>
         </div>
-        <div class="metric-item success">
-            <div class="metric-value success" id="current-vu">-</div>
-            <div class="metric-label">Active VU</div>
+        <div class="rt-item cyan">
+            <div class="rt-label">Total Requests</div>
+            <div class="rt-value cyan" id="total-req">0</div>
+            <div class="rt-sub"><span style="color:var(--success)" id="ok-count">0</span> ok &middot; <span style="color:var(--danger)" id="fail-count">0</span> fail</div>
+        </div>
+        <div class="rt-item green">
+            <div class="rt-label">Error Rate</div>
+            <div class="rt-value green" id="error-rate">0.0%</div>
+            <div class="progress-bar"><div class="progress-fill" id="err-bar" style="width:0%;background:var(--success);"></div></div>
+        </div>
+        <div class="rt-item warn">
+            <div class="rt-label">P95 Latency</div>
+            <div class="rt-value warn" id="p95">-</div>
         </div>
     </div>
 
-    <div class="card fade-up">
-        <div class="card-header">
-            <h3>Response Time</h3>
-            <span class="mono" style="color:var(--text-muted);font-size:0.72rem;">LAST 120s</span>
+    <!-- Charts side by side -->
+    <div class="chart-grid fade-up">
+        <div class="card" style="padding:1rem 1.25rem;">
+            <div class="card-header" style="margin-bottom:0.5rem;">
+                <h3>Response Time</h3>
+                <span class="mono" style="color:var(--text-muted);font-size:0.68rem;">LAST 60s</span>
+            </div>
+            <canvas id="latency-chart" height="140"></canvas>
         </div>
-        <canvas id="latency-chart" height="200"></canvas>
+        <div class="card" style="padding:1rem 1.25rem;">
+            <div class="card-header" style="margin-bottom:0.5rem;">
+                <h3>Throughput</h3>
+                <span class="mono" style="color:var(--text-muted);font-size:0.68rem;">LAST 60s</span>
+            </div>
+            <canvas id="tps-chart" height="140"></canvas>
+        </div>
     </div>
 
-    <div class="card fade-up">
-        <div class="card-header">
-            <h3>TPS</h3>
-            <span class="mono" style="color:var(--text-muted);font-size:0.72rem;">LAST 120s</span>
+    <!-- Step breakdown -->
+    <div class="card fade-up" style="padding:1rem 1.25rem;">
+        <div class="card-header" style="margin-bottom:0.5rem;">
+            <h3>Step Breakdown</h3>
+            <span class="mono" style="color:var(--text-muted);font-size:0.68rem;">REAL-TIME</span>
         </div>
-        <canvas id="tps-chart" height="200"></canvas>
+        <table class="step-table">
+            <thead>
+                <tr><th>Step</th><th>Requests</th><th>Avg Latency</th><th>P95</th><th>Error Rate</th></tr>
+            </thead>
+            <tbody id="step-body">
+                <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:1rem;">Waiting for data...</td></tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script th:inline="javascript">
     const executionId = [[${execution.id}]];
-    const maxDataPoints = 120;
+    const maxDataPoints = 60;
+    const startTime = Date.now();
 
-    const chartColors = {
-        cyan: '#00d4ff',
-        cyanDim: 'rgba(0, 212, 255, 0.08)',
-        green: '#10b981',
-        greenDim: 'rgba(16, 185, 129, 0.08)',
-        grid: 'rgba(99, 179, 237, 0.06)',
-        text: '#64748b'
+    // Cumulative counters
+    let totalRequests = 0, totalErrors = 0;
+
+    // Elapsed timer
+    setInterval(() => {
+        const sec = Math.floor((Date.now() - startTime) / 1000);
+        const m = String(Math.floor(sec / 60)).padStart(2, '0');
+        const s = String(sec % 60).padStart(2, '0');
+        document.getElementById('elapsed').textContent = m + ':' + s;
+    }, 1000);
+
+    // Chart config
+    const cc = {
+        cyan: '#00d4ff', cyanDim: 'rgba(0,212,255,0.08)',
+        green: '#10b981', greenDim: 'rgba(16,185,129,0.08)',
+        warn: 'rgba(245,158,11,0.5)',
+        grid: 'rgba(99,179,237,0.06)', text: '#64748b'
     };
 
     const latencyData = {
         labels: [],
-        datasets: [{
-            label: 'Avg (ms)',
-            data: [],
-            borderColor: chartColors.cyan,
-            backgroundColor: chartColors.cyanDim,
-            fill: true,
-            tension: 0.3,
-            borderWidth: 2,
-            pointRadius: 0
-        }]
+        datasets: [
+            { label: 'Avg', data: [], borderColor: cc.cyan, backgroundColor: cc.cyanDim, fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0 },
+            { label: 'P95', data: [], borderColor: cc.warn, backgroundColor: 'transparent', fill: false, tension: 0.3, borderWidth: 1, pointRadius: 0, borderDash: [4,3] }
+        ]
     };
     const tpsData = {
         labels: [],
-        datasets: [{
-            label: 'TPS',
-            data: [],
-            borderColor: chartColors.green,
-            backgroundColor: chartColors.greenDim,
-            fill: true,
-            tension: 0.3,
-            borderWidth: 2,
-            pointRadius: 0
-        }]
+        datasets: [
+            { label: 'TPS', data: [], borderColor: cc.green, backgroundColor: cc.greenDim, fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0 }
+        ]
     };
 
-    const chartOpts = {
-        responsive: true,
-        animation: false,
-        plugins: { legend: { display: false } },
-        scales: {
-            x: { display: false },
-            y: {
-                grid: { color: chartColors.grid, drawBorder: false },
-                ticks: {
-                    color: chartColors.text,
-                    font: { family: 'JetBrains Mono', size: 10 }
-                }
-            }
-        }
+    const legendOpts = {
+        display: true, position: 'top', align: 'end',
+        labels: { boxWidth: 14, boxHeight: 2, color: cc.text, font: { family: 'JetBrains Mono', size: 10 }, padding: 12 }
     };
+    const yOpts = (suffix) => ({
+        grid: { color: cc.grid, drawBorder: false },
+        ticks: { color: cc.text, font: { family: 'JetBrains Mono', size: 10 }, callback: v => v + (suffix || '') }
+    });
 
-    const latencyChart = new Chart(document.getElementById('latency-chart'), { type: 'line', data: latencyData, options: chartOpts });
-    const tpsChart = new Chart(document.getElementById('tps-chart'), { type: 'line', data: tpsData, options: chartOpts });
+    const latencyChart = new Chart(document.getElementById('latency-chart'), {
+        type: 'line', data: latencyData,
+        options: { responsive: true, animation: false, interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: legendOpts }, scales: { x: { display: false }, y: yOpts('ms') } }
+    });
+    const tpsChart = new Chart(document.getElementById('tps-chart'), {
+        type: 'line', data: tpsData,
+        options: { responsive: true, animation: false,
+            plugins: { legend: legendOpts }, scales: { x: { display: false }, y: yOpts('') } }
+    });
 
+    // Step data accumulator
+    const stepData = {};
+
+    function getLatencyColor(ms) {
+        if (ms < 50) return 'var(--success)';
+        if (ms < 100) return 'var(--accent)';
+        if (ms < 200) return 'var(--warning)';
+        return 'var(--danger)';
+    }
+
+    function updateStepTable() {
+        const tbody = document.getElementById('step-body');
+        const names = Object.keys(stepData);
+        if (names.length === 0) return;
+
+        tbody.innerHTML = names.map(name => {
+            const s = stepData[name];
+            const errRate = s.requestCount > 0 ? ((s.errorCount / s.requestCount) * 100).toFixed(1) : '0.0';
+            const errColor = parseFloat(errRate) > 5 ? 'var(--danger)' : 'var(--success)';
+            const latW = Math.min(s.avgResponseTime / 2, 100);
+            const latColor = getLatencyColor(s.avgResponseTime);
+            return `<tr>
+                <td style="font-weight:500;">${name}</td>
+                <td class="mono">${s.requestCount.toLocaleString()}</td>
+                <td class="mono">${s.avgResponseTime.toFixed(1)}ms
+                    <span class="latency-bar-bg"><span class="latency-bar-fill" style="width:${latW}%;background:${latColor};"></span></span>
+                </td>
+                <td class="mono" style="color:${getLatencyColor(s.p95ResponseTime)}">${s.p95ResponseTime.toFixed(1)}ms</td>
+                <td class="mono" style="color:${errColor}">${errRate}%</td>
+            </tr>`;
+        }).join('');
+    }
+
+    // SSE
     const eventSource = new EventSource(`/executions/${executionId}/stream`);
 
     eventSource.addEventListener('metric', function(e) {
@@ -122,25 +254,61 @@
 
         const now = new Date().toLocaleTimeString();
 
+        // Cumulative
+        totalRequests += overall.requestCount;
+        totalErrors += overall.errorCount;
+        const totalOk = totalRequests - totalErrors;
+        const errRate = totalRequests > 0 ? ((totalErrors / totalRequests) * 100).toFixed(1) : '0.0';
+
+        // Update metrics strip
         document.getElementById('tps').textContent = overall.tps.toFixed(1);
         document.getElementById('avg-latency').textContent = overall.avgResponseTime.toFixed(1) + 'ms';
         document.getElementById('current-vu').textContent = overall.currentVu;
+        document.getElementById('p95').textContent = overall.p95ResponseTime.toFixed(1) + 'ms';
+        document.getElementById('total-req').textContent = totalRequests.toLocaleString();
+        document.getElementById('ok-count').textContent = totalOk.toLocaleString();
+        document.getElementById('fail-count').textContent = totalErrors.toLocaleString();
 
-        const errRate = overall.requestCount > 0 ? ((overall.errorCount / overall.requestCount) * 100).toFixed(1) : '0.0';
         const errEl = document.getElementById('error-rate');
         errEl.textContent = errRate + '%';
         errEl.style.color = parseFloat(errRate) > 5 ? 'var(--danger)' : 'var(--success)';
+        const errBar = document.getElementById('err-bar');
+        errBar.style.width = Math.min(parseFloat(errRate) * 2, 100) + '%';
+        errBar.style.background = parseFloat(errRate) > 5 ? 'var(--danger)' : 'var(--success)';
 
+        // Charts
         latencyData.labels.push(now);
         latencyData.datasets[0].data.push(overall.avgResponseTime);
+        latencyData.datasets[1].data.push(overall.p95ResponseTime);
         tpsData.labels.push(now);
         tpsData.datasets[0].data.push(overall.tps);
 
-        if (latencyData.labels.length > maxDataPoints) { latencyData.labels.shift(); latencyData.datasets[0].data.shift(); }
-        if (tpsData.labels.length > maxDataPoints) { tpsData.labels.shift(); tpsData.datasets[0].data.shift(); }
-
+        if (latencyData.labels.length > maxDataPoints) {
+            latencyData.labels.shift();
+            latencyData.datasets[0].data.shift();
+            latencyData.datasets[1].data.shift();
+        }
+        if (tpsData.labels.length > maxDataPoints) {
+            tpsData.labels.shift();
+            tpsData.datasets[0].data.shift();
+        }
         latencyChart.update();
         tpsChart.update();
+
+        // Step breakdown
+        metrics.filter(m => m.stepName !== null).forEach(m => {
+            if (!stepData[m.stepName]) {
+                stepData[m.stepName] = { requestCount: 0, errorCount: 0, avgResponseTime: 0, p95ResponseTime: 0, tps: 0, _samples: 0 };
+            }
+            const s = stepData[m.stepName];
+            s.requestCount += m.requestCount;
+            s.errorCount += m.errorCount;
+            s._samples++;
+            s.avgResponseTime = s.avgResponseTime + (m.avgResponseTime - s.avgResponseTime) / s._samples;
+            s.p95ResponseTime = m.p95ResponseTime;
+            s.tps = m.tps;
+        });
+        updateStepTable();
     });
 
     eventSource.addEventListener('complete', function() {
