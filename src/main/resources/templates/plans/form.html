@@ -290,7 +290,8 @@
                 <div class="form-section">Extractors <span class="tip" data-tip="응답에서 값을 추출하여 변수로 저장합니다. 이후 스텝에서 {{변수명}}으로 참조할 수 있습니다.">?</span></div>
                 <div id="extractor-list">
                     <!-- 편집 모드: 기존 Extractor 표시 -->
-                    <div th:if="${editingStep != null}" th:each="ext : ${editingStep.extractors}" class="extractor-row" style="display:grid;grid-template-columns:120px 1fr 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+                    <th:block th:if="${editingStep != null}">
+                    <div th:each="ext : ${editingStep.extractors}" class="extractor-row" style="display:grid;grid-template-columns:120px 1fr 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
                         <div class="form-group" style="margin-bottom:0;">
                             <select name="extractorSource" class="form-control">
                                 <option value="BODY" th:selected="${ext.source.name() == 'BODY'}">Body</option>
@@ -305,6 +306,7 @@
                         </div>
                         <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.extractor-row').remove()" style="margin-bottom:0.25rem;">X</button>
                     </div>
+                    </th:block>
                     <!-- 신규 모드: 빈 행 -->
                     <div th:if="${editingStep == null}" class="extractor-row" style="display:grid;grid-template-columns:120px 1fr 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
                         <div class="form-group" style="margin-bottom:0;">
@@ -330,7 +332,8 @@
                 <div class="form-section">Validators <span class="tip" data-tip="응답이 기대한 값과 일치하는지 검증합니다. 실패하면 해당 요청이 에러로 처리됩니다.">?</span></div>
                 <div id="validator-list">
                     <!-- 편집 모드: 기존 Validator 표시 -->
-                    <div th:if="${editingStep != null}" th:each="val : ${editingStep.validators}" class="validator-row" style="display:grid;grid-template-columns:160px 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+                    <th:block th:if="${editingStep != null}">
+                    <div th:each="val : ${editingStep.validators}" class="validator-row" style="display:grid;grid-template-columns:160px 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
                         <div class="form-group" style="margin-bottom:0;">
                             <select name="validatorType" class="form-control">
                                 <option value="STATUS" th:selected="${val.type.name() == 'STATUS'}">Status Code</option>
@@ -342,6 +345,7 @@
                         </div>
                         <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.validator-row').remove()" style="margin-bottom:0.25rem;">X</button>
                     </div>
+                    </th:block>
                     <!-- 신규 모드: 빈 행 -->
                     <div th:if="${editingStep == null}" class="validator-row" style="display:grid;grid-template-columns:160px 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
                         <div class="form-group" style="margin-bottom:0;">
