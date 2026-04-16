@@ -55,7 +55,7 @@
     </div>
 
     <!-- Charts -->
-    <div class="chart-grid fade-up" th:if="${!overallSnapshots.isEmpty()}">
+    <div class="chart-grid fade-up" th:if="${hasSnapshots}">
         <div class="card" style="padding:1rem 1.25rem;">
             <div class="card-header" style="margin-bottom:0.5rem;">
                 <h3>Response Time <span class="tip" data-tip="테스트 진행 중 평균 응답 시간(Avg)과 95번째 퍼센타일(P95)의 변화 추이입니다.">?</span></h3>
@@ -142,10 +142,12 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4" th:if="${!overallSnapshots.isEmpty()}"></script>
-<script th:if="${!overallSnapshots.isEmpty()}" th:inline="javascript">
-    const snapshots = /*[[${overallSnapshots}]]*/ [];
-    const labels = snapshots.map((s, i) => i + 's');
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4" th:if="${hasSnapshots}"></script>
+<script th:if="${hasSnapshots}" th:inline="javascript">
+    const avgData = /*[[${chartAvg}]]*/ [];
+    const p95Data = /*[[${chartP95}]]*/ [];
+    const tpsData = /*[[${chartTps}]]*/ [];
+    const labels = avgData.map((_, i) => i + 's');
     const cc = {
         cyan: '#00d4ff', cyanDim: 'rgba(0,212,255,0.08)',
         green: '#10b981', greenDim: 'rgba(16,185,129,0.08)',
@@ -162,8 +164,8 @@
         data: {
             labels,
             datasets: [
-                { label: 'Avg', data: snapshots.map(s => s.avgResponseTime), borderColor: cc.cyan, backgroundColor: cc.cyanDim, fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0 },
-                { label: 'P95', data: snapshots.map(s => s.p95ResponseTime), borderColor: cc.warn, backgroundColor: 'transparent', fill: false, tension: 0.3, borderWidth: 1, pointRadius: 0, borderDash: [4,3] }
+                { label: 'Avg', data: avgData, borderColor: cc.cyan, backgroundColor: cc.cyanDim, fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0 },
+                { label: 'P95', data: p95Data, borderColor: cc.warn, backgroundColor: 'transparent', fill: false, tension: 0.3, borderWidth: 1, pointRadius: 0, borderDash: [4,3] }
             ]
         },
         options: {
@@ -178,7 +180,7 @@
         data: {
             labels,
             datasets: [
-                { label: 'TPS', data: snapshots.map(s => s.tps), borderColor: cc.green, backgroundColor: cc.greenDim, fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0 }
+                { label: 'TPS', data: tpsData, borderColor: cc.green, backgroundColor: cc.greenDim, fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0 }
             ]
         },
         options: {

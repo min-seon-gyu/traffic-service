@@ -51,8 +51,11 @@ class ExecutionController(
 
         model.addAttribute("execution", execution)
         model.addAttribute("plan", plan)
-        model.addAttribute("overallSnapshots", overallSnapshots)
         model.addAttribute("stepSummary", stepSummary)
+        model.addAttribute("chartAvg", overallSnapshots.map { it.avgResponseTime })
+        model.addAttribute("chartP95", overallSnapshots.map { it.p95ResponseTime })
+        model.addAttribute("chartTps", overallSnapshots.map { it.tps })
+        model.addAttribute("hasSnapshots", overallSnapshots.isNotEmpty())
         return "executions/detail"
     }
 

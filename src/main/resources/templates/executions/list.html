@@ -32,9 +32,9 @@
                     <span th:if="${exec.result != null}" class="badge" th:classappend="'badge-' + ${exec.result.name().toLowerCase()}" th:text="${exec.result}"></span>
                     <span th:unless="${exec.result != null}" style="color:var(--text-muted)">&mdash;</span>
                 </td>
-                <td class="mono" th:text="${exec.totalRequests}"></td>
-                <td class="mono" th:text="${#numbers.formatDecimal(exec.avgResponseTime, 0, 1)}"></td>
-                <td class="mono" th:text="${#numbers.formatDecimal(exec.errorRate, 0, 1) + '%'}"></td>
+                <td class="mono" th:text="${exec.status.name() == 'RUNNING' && exec.totalRequests == 0 ? '—' : exec.totalRequests}"></td>
+                <td class="mono" th:text="${exec.status.name() == 'RUNNING' && exec.totalRequests == 0 ? '—' : #numbers.formatDecimal(exec.avgResponseTime, 0, 1)}"></td>
+                <td class="mono" th:text="${exec.status.name() == 'RUNNING' && exec.totalRequests == 0 ? '—' : #numbers.formatDecimal(exec.errorRate, 0, 1) + '%'}"></td>
                 <td style="color:var(--text-muted);font-size:0.85rem" th:text="${#temporals.format(exec.startedAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
                 <td>
                     <div class="btn-group">
