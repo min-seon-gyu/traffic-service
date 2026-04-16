@@ -231,9 +231,12 @@
                         </div>
                     </div>
                     <span class="step-meta" th:text="${step.thinkTimeMs != null ? step.thinkTimeMs + 'ms' : 'default'}"></span>
-                    <form th:action="@{/plans/{pid}/steps/{sid}/delete(pid=${plan.id},sid=${step.id})}" method="post">
-                        <button type="submit" class="btn btn-danger btn-sm">Del</button>
-                    </form>
+                    <div class="btn-group">
+                        <a th:href="@{/plans/{pid}(pid=${plan.id},editStep=${step.id})}" class="btn btn-ghost btn-sm">Edit</a>
+                        <form th:action="@{/plans/{pid}/steps/{sid}/delete(pid=${plan.id},sid=${step.id})}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">Del</button>
+                        </form>
+                    </div>
                 </div>
             </div>
             <div th:if="${steps == null || steps.isEmpty()}" class="empty-state">
@@ -241,44 +244,69 @@
             </div>
         </div>
 
-        <div class="card fade-up">
-            <div class="card-header"><h3>Add Step</h3></div>
-            <form th:action="@{/plans/{id}/steps(id=${plan.id})}" method="post">
+        <div class="card fade-up" th:id="${editingStep != null ? 'step-form' : ''}">
+            <div class="card-header">
+                <h3 th:text="${editingStep != null ? 'Edit Step: ' + editingStep.name : 'Add Step'}"></h3>
+                <a th:if="${editingStep != null}" th:href="@{/plans/{id}(id=${plan.id})}" class="btn btn-ghost btn-sm">Cancel</a>
+            </div>
+            <form th:action="${editingStep != null ? '/plans/' + plan.id + '/steps/' + editingStep.id : '/plans/' + plan.id + '/steps'}" method="post">
                 <div class="grid-2">
                     <div class="form-group">
                         <label>Name <span class="tip" data-tip="스텝의 이름입니다. (예: Login, Get Profile)">?</span></label>
-                        <input type="text" name="name" class="form-control" placeholder="e.g. Login" required/>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Login" required
+                               th:value="${editingStep != null ? editingStep.name : ''}"/>
                     </div>
                     <div class="form-group">
                         <label>HTTP Method <span class="tip" data-tip="요청에 사용할 HTTP 메서드입니다.">?</span></label>
                         <select name="httpMethod" class="form-control">
-                            <option value="GET">GET</option>
-                            <option value="POST">POST</option>
-                            <option value="PUT">PUT</option>
-                            <option value="DELETE">DELETE</option>
+                            <option value="GET" th:selected="${editingStep != null && editingStep.httpMethod.name() == 'GET'}">GET</option>
+                            <option value="POST" th:selected="${editingStep != null && editingStep.httpMethod.name() == 'POST'}">POST</option>
+                            <option value="PUT" th:selected="${editingStep != null && editingStep.httpMethod.name() == 'PUT'}">PUT</option>
+                            <option value="DELETE" th:selected="${editingStep != null && editingStep.httpMethod.name() == 'DELETE'}">DELETE</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Path <span class="tip" data-tip="요청 경로입니다. {{변수명}}으로 이전 스텝에서 추출한 값을 사용할 수 있습니다.">?</span></label>
-                        <input type="text" name="path" class="form-control" placeholder="/api/endpoint" required/>
+                        <input type="text" name="path" class="form-control" placeholder="/api/endpoint" required
+                               th:value="${editingStep != null ? editingStep.path : ''}"/>
                     </div>
                     <div class="form-group">
                         <label>Think Time (ms) <span class="tip" data-tip="이 스텝 실행 후 다음 스텝까지 대기 시간(ms)입니다. 비워두면 글로벌 설정을 따릅니다.">?</span></label>
-                        <input type="number" name="thinkTimeMs" class="form-control" min="0"/>
+                        <input type="number" name="thinkTimeMs" class="form-control" min="0"
+                               th:value="${editingStep != null ? editingStep.thinkTimeMs : ''}"/>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Headers (JSON) <span class="tip" data-tip="HTTP 요청 헤더를 JSON으로 입력합니다. {{변수명}} 사용 가능합니다.">?</span></label>
-                    <textarea name="headers" class="form-control" rows="2" placeholder='{"Content-Type": "application/json", "Authorization": "Bearer token"}'></textarea>
+                    <textarea name="headers" class="form-control" rows="2" placeholder='{"Content-Type": "application/json", "Authorization": "Bearer token"}'
+                              th:text="${editingStepHeadersJson != null ? editingStepHeadersJson : ''}"></textarea>
                 </div>
                 <div class="form-group">
                     <label>Body (JSON) <span class="tip" data-tip="HTTP 요청 본문을 JSON으로 입력합니다. {{변수명}} 사용 가능합니다.">?</span></label>
-                    <textarea name="body" class="form-control" rows="3" placeholder='{"key": "value"}'></textarea>
+                    <textarea name="body" class="form-control" rows="3" placeholder='{"key": "value"}'
+                              th:text="${editingStep != null ? editingStep.body : ''}"></textarea>
                 </div>
 
                 <div class="form-section">Extractors <span class="tip" data-tip="응답에서 값을 추출하여 변수로 저장합니다. 이후 스텝에서 {{변수명}}으로 참조할 수 있습니다.">?</span></div>
                 <div id="extractor-list">
-                    <div class="extractor-row" style="display:grid;grid-template-columns:120px 1fr 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+                    <!-- 편집 모드: 기존 Extractor 표시 -->
+                    <div th:if="${editingStep != null}" th:each="ext : ${editingStep.extractors}" class="extractor-row" style="display:grid;grid-template-columns:120px 1fr 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <select name="extractorSource" class="form-control">
+                                <option value="BODY" th:selected="${ext.source.name() == 'BODY'}">Body</option>
+                                <option value="HEADER" th:selected="${ext.source.name() == 'HEADER'}">Header</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <input type="text" name="extractorJsonPath" class="form-control" th:value="${ext.jsonPath}"/>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <input type="text" name="extractorVariable" class="form-control" th:value="${ext.variableName}"/>
+                        </div>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.extractor-row').remove()" style="margin-bottom:0.25rem;">X</button>
+                    </div>
+                    <!-- 신규 모드: 빈 행 -->
+                    <div th:if="${editingStep == null}" class="extractor-row" style="display:grid;grid-template-columns:120px 1fr 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label>Source</label>
                             <select name="extractorSource" class="form-control">
@@ -301,7 +329,21 @@
 
                 <div class="form-section">Validators <span class="tip" data-tip="응답이 기대한 값과 일치하는지 검증합니다. 실패하면 해당 요청이 에러로 처리됩니다.">?</span></div>
                 <div id="validator-list">
-                    <div class="validator-row" style="display:grid;grid-template-columns:160px 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+                    <!-- 편집 모드: 기존 Validator 표시 -->
+                    <div th:if="${editingStep != null}" th:each="val : ${editingStep.validators}" class="validator-row" style="display:grid;grid-template-columns:160px 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <select name="validatorType" class="form-control">
+                                <option value="STATUS" th:selected="${val.type.name() == 'STATUS'}">Status Code</option>
+                                <option value="BODY_CONTAINS" th:selected="${val.type.name() == 'BODY_CONTAINS'}">Body Contains</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <input type="text" name="validatorExpected" class="form-control" th:value="${val.expected}"/>
+                        </div>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.validator-row').remove()" style="margin-bottom:0.25rem;">X</button>
+                    </div>
+                    <!-- 신규 모드: 빈 행 -->
+                    <div th:if="${editingStep == null}" class="validator-row" style="display:grid;grid-template-columns:160px 1fr auto;gap:0.5rem;align-items:end;margin-bottom:0.5rem;">
                         <div class="form-group" style="margin-bottom:0;">
                             <label>Type</label>
                             <select name="validatorType" class="form-control">
@@ -319,7 +361,7 @@
                 <button type="button" class="btn btn-ghost btn-sm" onclick="addValidatorRow()" style="margin-bottom:1.5rem;">+ Add Validator</button>
 
                 <div>
-                    <button type="submit" class="btn btn-primary">Add Step</button>
+                    <button type="submit" class="btn btn-primary" th:text="${editingStep != null ? 'Update Step' : 'Add Step'}">Add Step</button>
                 </div>
             </form>
         </div>
@@ -390,7 +432,11 @@ function validatePlanForm() {
     }
     return true;
 }
-document.addEventListener('DOMContentLoaded', function() { toggleThinkTime(); toggleAuthTokens(); });
+document.addEventListener('DOMContentLoaded', function() {
+    toggleThinkTime(); toggleAuthTokens();
+    const editForm = document.getElementById('step-form');
+    if (editForm) editForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
 </script>
 </body>
 </html>

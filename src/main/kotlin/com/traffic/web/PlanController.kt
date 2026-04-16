@@ -84,11 +84,26 @@ class PlanController(private val planService: TestPlanService) {
     }
 
     @GetMapping("/{id}")
-    fun detail(@PathVariable id: Long, model: Model): String {
+    fun detail(
+        @PathVariable id: Long,
+        @RequestParam(required = false) editStep: Long?,
+        model: Model
+    ): String {
         val plan = planService.findById(id) ?: return "redirect:/plans"
+        val steps = planService.getSteps(id)
         model.addAttribute("plan", plan)
-        model.addAttribute("steps", planService.getSteps(id))
+        model.addAttribute("steps", steps)
         model.addAttribute("isNew", false)
+        if (editStep != null) {
+            val step = steps.find { it.id == editStep }
+            if (step != null) {
+                model.addAttribute("editingStep", step)
+                if (step.headers.isNotEmpty()) {
+                    model.addAttribute("editingStepHeadersJson",
+                        com.fasterxml.jackson.module.kotlin.jacksonObjectMapper().writeValueAsString(step.headers))
+                }
+            }
+        }
         return "plans/form"
     }
 
