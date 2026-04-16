@@ -109,15 +109,13 @@
                     <span th:text="${#numbers.formatDecimal(step['avgResponseTime'], 0, 1)} + 'ms'"></span>
                     <span class="latency-bar-bg">
                         <span class="latency-bar-fill"
-                              th:style="'width:' + ${T(Math).min(step['avgResponseTime'] / 2, 100)} + '%;background:' + ${step['avgResponseTime'] < 50 ? 'var(--success)' : (step['avgResponseTime'] < 100 ? 'var(--accent)' : (step['avgResponseTime'] < 200 ? 'var(--warning)' : 'var(--danger)'))}"></span>
+                              th:style="'width:' + ${step['barWidth']} + '%;background:' + ${step['barColor']}"></span>
                     </span>
                 </td>
-                <td class="mono"
-                    th:style="${step['p95ResponseTime'] < 100 ? 'color:var(--success)' : (step['p95ResponseTime'] < 300 ? 'color:var(--warning)' : 'color:var(--danger)')}"
+                <td class="mono" th:style="'color:' + ${step['p95Color']}"
                     th:text="${#numbers.formatDecimal(step['p95ResponseTime'], 0, 1)} + 'ms'"></td>
-                <td class="mono"
-                    th:style="${(step['requestCount'] > 0 ? (step['errorCount'] * 100.0 / step['requestCount']) : 0) > 5 ? 'color:var(--danger)' : 'color:var(--success)'}"
-                    th:text="${step['requestCount'] > 0 ? #numbers.formatDecimal(step['errorCount'] * 100.0 / step['requestCount'], 0, 1) + '%' : '0.0%'}"></td>
+                <td class="mono" th:style="'color:' + ${step['errColor']}"
+                    th:text="${#numbers.formatDecimal(step['errorRate'], 0, 1)} + '%'"></td>
             </tr>
             </tbody>
         </table>

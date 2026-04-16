@@ -40,12 +40,20 @@ class ExecutionController(
 
         // Step별 집계
         val stepSummary = stepSnapshots.groupBy { it.stepName!! }.map { (name, snaps) ->
+            val reqCount = snaps.sumOf { it.requestCount }
+            val errCount = snaps.sumOf { it.errorCount }
+            val avgResp = if (snaps.isNotEmpty()) snaps.map { it.avgResponseTime }.average() else 0.0
+            val p95Resp = if (snaps.isNotEmpty()) snaps.map { it.p95ResponseTime }.average() else 0.0
+            val errRate = if (reqCount > 0) (errCount.toDouble() / reqCount) * 100 else 0.0
+            val barWidth = minOf(avgResp / 2, 100.0)
+            val barColor = when { avgResp < 50 -> "var(--success)"; avgResp < 100 -> "var(--accent)"; avgResp < 200 -> "var(--warning)"; else -> "var(--danger)" }
+            val p95Color = when { p95Resp < 100 -> "var(--success)"; p95Resp < 300 -> "var(--warning)"; else -> "var(--danger)" }
+            val errColor = if (errRate > 5) "var(--danger)" else "var(--success)"
             mapOf(
-                "name" to name,
-                "requestCount" to snaps.sumOf { it.requestCount },
-                "errorCount" to snaps.sumOf { it.errorCount },
-                "avgResponseTime" to if (snaps.isNotEmpty()) snaps.map { it.avgResponseTime }.average() else 0.0,
-                "p95ResponseTime" to if (snaps.isNotEmpty()) snaps.map { it.p95ResponseTime }.average() else 0.0
+                "name" to name, "requestCount" to reqCount, "errorCount" to errCount,
+                "avgResponseTime" to avgResp, "p95ResponseTime" to p95Resp,
+                "errorRate" to errRate, "barWidth" to barWidth,
+                "barColor" to barColor, "p95Color" to p95Color, "errColor" to errColor
             )
         }
 
