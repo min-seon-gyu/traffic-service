@@ -31,6 +31,7 @@ dependencies {
     implementation("com.jayway.jsonpath:json-path:2.9.0")
     runtimeOnly("com.mysql:mysql-connector-j")
     runtimeOnly("com.h2database:h2")
+    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-webmvc-test")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
