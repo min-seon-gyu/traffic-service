@@ -15,7 +15,11 @@ class ExecutionController(
 
     @GetMapping
     fun list(model: Model): String {
-        model.addAttribute("executions", executionService.getAllExecutions())
+        val executions = executionService.getAllExecutions()
+        val planNames = executions.map { it.testPlanId }.distinct()
+            .associateWith { planService.findById(it)?.name ?: "(삭제된 플랜)" }
+        model.addAttribute("executions", executions)
+        model.addAttribute("planNames", planNames)
         return "executions/list"
     }
 

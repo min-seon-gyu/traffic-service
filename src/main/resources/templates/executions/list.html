@@ -14,6 +14,7 @@
         <table>
             <thead><tr>
                 <th>#</th>
+                <th>Plan</th>
                 <th>Status <span class="tip" data-tip="실행 상태입니다. Running(실행 중), Completed(완료), Aborted(중단).">?</span></th>
                 <th>Result <span class="tip" data-tip="Threshold 기준 자동 판정 결과입니다. Threshold 미설정 시 항상 Pass입니다.">?</span></th>
                 <th>Requests <span class="tip" data-tip="총 요청 수입니다.">?</span></th>
@@ -25,6 +26,7 @@
             <tbody>
             <tr th:each="exec : ${executions}">
                 <td class="mono" style="color:var(--text-muted)" th:text="'#' + ${exec.id}"></td>
+                <td><a th:href="@{/plans/{id}(id=${exec.testPlanId})}" th:text="${planNames[exec.testPlanId]}" style="font-weight:500;"></a></td>
                 <td><span class="badge" th:classappend="'badge-' + ${exec.status.name().toLowerCase()}" th:text="${exec.status}"></span></td>
                 <td>
                     <span th:if="${exec.result != null}" class="badge" th:classappend="'badge-' + ${exec.result.name().toLowerCase()}" th:text="${exec.result}"></span>
