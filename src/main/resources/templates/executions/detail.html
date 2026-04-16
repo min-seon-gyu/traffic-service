@@ -3,10 +3,30 @@
 <head th:replace="~{layout :: head('Result')}"></head>
 <body>
 <nav th:replace="~{layout :: nav}"></nav>
-<div class="container">
+<style>
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .step-table { width: 100%; border-collapse: collapse; }
+    .step-table thead th {
+        font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+        font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;
+        color: var(--text-muted); padding: 0.5rem 0.75rem; text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+    .step-table tbody td {
+        padding: 0.55rem 0.75rem; font-size: 0.82rem;
+        border-bottom: 1px solid rgba(99,179,237,0.04);
+    }
+    .latency-bar-bg {
+        height: 6px; background: var(--bg-surface); border-radius: 3px;
+        width: 70px; display: inline-block; vertical-align: middle; margin-left: 0.4rem;
+    }
+    .latency-bar-fill { height: 100%; border-radius: 3px; }
+</style>
+<div class="container" style="max-width:1400px;">
     <div class="page-header fade-up">
         <div>
             <h2>Execution #<span th:text="${execution.id}"></span></h2>
+            <p class="subtitle" th:if="${plan != null}" th:text="${plan.name}"></p>
         </div>
         <span class="badge" th:if="${execution.result != null}"
               th:classappend="'badge-' + ${execution.result.name().toLowerCase()}"
@@ -34,8 +54,24 @@
         </div>
     </div>
 
+    <!-- Charts -->
+    <div class="chart-grid fade-up" th:if="${!overallSnapshots.isEmpty()}">
+        <div class="card" style="padding:1rem 1.25rem;">
+            <div class="card-header" style="margin-bottom:0.5rem;">
+                <h3>Response Time <span class="tip" data-tip="테스트 진행 중 평균 응답 시간(Avg)과 95번째 퍼센타일(P95)의 변화 추이입니다.">?</span></h3>
+            </div>
+            <canvas id="latency-chart" height="140"></canvas>
+        </div>
+        <div class="card" style="padding:1rem 1.25rem;">
+            <div class="card-header" style="margin-bottom:0.5rem;">
+                <h3>Throughput <span class="tip" data-tip="테스트 진행 중 초당 처리 요청 수(TPS)의 변화 추이입니다.">?</span></h3>
+            </div>
+            <canvas id="tps-chart" height="140"></canvas>
+        </div>
+    </div>
+
     <div class="card fade-up">
-        <div class="card-header"><h3>Response Time Distribution <span class="tip" data-tip="응답 시간의 퍼센타일 분포입니다. P50은 절반의 요청이 이 시간 이내, P99는 99%가 이 시간 이내에 응답했음을 의미합니다.">?</span></h3></div>
+        <div class="card-header"><h3>Response Time Distribution <span class="tip" data-tip="응답 시간의 퍼센타일 분포입니다. P50은 절반, P99는 99%의 요청이 이 시간 이내에 응답했음을 의미합니다.">?</span></h3></div>
         <div class="percentile-grid">
             <div class="percentile-item">
                 <div class="percentile-label">p50</div>
@@ -56,6 +92,37 @@
         </div>
     </div>
 
+    <!-- Step Breakdown -->
+    <div class="card fade-up" th:if="${!stepSummary.isEmpty()}">
+        <div class="card-header">
+            <h3>Step Breakdown <span class="tip" data-tip="각 스텝별 누적 요청 수, 평균 응답 시간, P95, 에러율입니다.">?</span></h3>
+        </div>
+        <table class="step-table">
+            <thead>
+                <tr><th>Step</th><th>Requests</th><th>Avg Latency</th><th>P95</th><th>Error Rate</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="step : ${stepSummary}">
+                <td style="font-weight:500;" th:text="${step['name']}"></td>
+                <td class="mono" th:text="${step['requestCount']}"></td>
+                <td class="mono">
+                    <span th:text="${#numbers.formatDecimal(step['avgResponseTime'], 0, 1)} + 'ms'"></span>
+                    <span class="latency-bar-bg">
+                        <span class="latency-bar-fill"
+                              th:style="'width:' + ${T(Math).min(step['avgResponseTime'] / 2, 100)} + '%;background:' + ${step['avgResponseTime'] < 50 ? 'var(--success)' : (step['avgResponseTime'] < 100 ? 'var(--accent)' : (step['avgResponseTime'] < 200 ? 'var(--warning)' : 'var(--danger)'))}"></span>
+                    </span>
+                </td>
+                <td class="mono"
+                    th:style="${step['p95ResponseTime'] < 100 ? 'color:var(--success)' : (step['p95ResponseTime'] < 300 ? 'color:var(--warning)' : 'color:var(--danger)')}"
+                    th:text="${#numbers.formatDecimal(step['p95ResponseTime'], 0, 1)} + 'ms'"></td>
+                <td class="mono"
+                    th:style="${(step['requestCount'] > 0 ? (step['errorCount'] * 100.0 / step['requestCount']) : 0) > 5 ? 'color:var(--danger)' : 'color:var(--success)'}"
+                    th:text="${step['requestCount'] > 0 ? #numbers.formatDecimal(step['errorCount'] * 100.0 / step['requestCount'], 0, 1) + '%' : '0.0%'}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
     <div class="card fade-up">
         <div class="card-header"><h3>Summary</h3></div>
         <table class="summary-table">
@@ -74,5 +141,52 @@
         <a href="/executions" class="btn btn-ghost">Back to List</a>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4" th:if="${!overallSnapshots.isEmpty()}"></script>
+<script th:if="${!overallSnapshots.isEmpty()}" th:inline="javascript">
+    const snapshots = /*[[${overallSnapshots}]]*/ [];
+    const labels = snapshots.map((s, i) => i + 's');
+    const cc = {
+        cyan: '#00d4ff', cyanDim: 'rgba(0,212,255,0.08)',
+        green: '#10b981', greenDim: 'rgba(16,185,129,0.08)',
+        warn: 'rgba(245,158,11,0.5)',
+        grid: 'rgba(99,179,237,0.06)', text: '#64748b'
+    };
+    const legendOpts = {
+        display: true, position: 'top', align: 'end',
+        labels: { boxWidth: 14, boxHeight: 2, color: cc.text, font: { family: 'JetBrains Mono', size: 10 }, padding: 12 }
+    };
+
+    new Chart(document.getElementById('latency-chart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Avg', data: snapshots.map(s => s.avgResponseTime), borderColor: cc.cyan, backgroundColor: cc.cyanDim, fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0 },
+                { label: 'P95', data: snapshots.map(s => s.p95ResponseTime), borderColor: cc.warn, backgroundColor: 'transparent', fill: false, tension: 0.3, borderWidth: 1, pointRadius: 0, borderDash: [4,3] }
+            ]
+        },
+        options: {
+            responsive: true, animation: false, interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: legendOpts },
+            scales: { x: { display: false }, y: { grid: { color: cc.grid, drawBorder: false }, ticks: { color: cc.text, font: { family: 'JetBrains Mono', size: 10 }, callback: v => v + 'ms' } } }
+        }
+    });
+
+    new Chart(document.getElementById('tps-chart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: 'TPS', data: snapshots.map(s => s.tps), borderColor: cc.green, backgroundColor: cc.greenDim, fill: true, tension: 0.3, borderWidth: 1.5, pointRadius: 0 }
+            ]
+        },
+        options: {
+            responsive: true, animation: false,
+            plugins: { legend: legendOpts },
+            scales: { x: { display: false }, y: { grid: { color: cc.grid, drawBorder: false }, ticks: { color: cc.text, font: { family: 'JetBrains Mono', size: 10 } } } }
+        }
+    });
+</script>
 </body>
 </html>

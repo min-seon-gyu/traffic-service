@@ -12,7 +12,16 @@
     </div>
     <div class="card fade-up">
         <table>
-            <thead><tr><th>#</th><th>Status</th><th>Result</th><th>Requests</th><th>Avg (ms)</th><th>Error %</th><th>Started</th><th></th></tr></thead>
+            <thead><tr>
+                <th>#</th>
+                <th>Status <span class="tip" data-tip="실행 상태입니다. Running(실행 중), Completed(완료), Aborted(중단).">?</span></th>
+                <th>Result <span class="tip" data-tip="Threshold 기준 자동 판정 결과입니다. Threshold 미설정 시 항상 Pass입니다.">?</span></th>
+                <th>Requests <span class="tip" data-tip="총 요청 수입니다.">?</span></th>
+                <th>Avg (ms) <span class="tip" data-tip="평균 응답 시간(밀리초)입니다.">?</span></th>
+                <th>Error % <span class="tip" data-tip="전체 요청 중 실패한 비율(%)입니다.">?</span></th>
+                <th>Started</th>
+                <th></th>
+            </tr></thead>
             <tbody>
             <tr th:each="exec : ${executions}">
                 <td class="mono" style="color:var(--text-muted)" th:text="'#' + ${exec.id}"></td>

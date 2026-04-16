@@ -85,6 +85,10 @@ class ExecutionService(
 
     fun getAllExecutions(): List<TestExecution> = executionRepository.findAllByOrderByStartedAtDesc()
 
+    fun getSnapshots(executionId: Long): List<MetricSnapshot> = snapshotRepository.findByExecutionIdOrderByTimestampAsc(executionId)
+
+    fun getOverallSnapshots(executionId: Long): List<MetricSnapshot> = snapshotRepository.findByExecutionIdAndStepNameIsNullOrderByTimestampAsc(executionId)
+
     @Transactional
     fun deleteExecution(id: Long) {
         runningEngines[id]?.abort()

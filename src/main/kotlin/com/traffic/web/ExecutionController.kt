@@ -30,8 +30,25 @@ class ExecutionController(
     fun detail(@PathVariable id: Long, model: Model): String {
         val execution = executionService.getExecution(id) ?: return "redirect:/executions"
         val plan = planService.findById(execution.testPlanId)
+        val allSnapshots = executionService.getSnapshots(id)
+        val overallSnapshots = allSnapshots.filter { it.stepName == null }
+        val stepSnapshots = allSnapshots.filter { it.stepName != null }
+
+        // Step별 집계
+        val stepSummary = stepSnapshots.groupBy { it.stepName!! }.map { (name, snaps) ->
+            mapOf(
+                "name" to name,
+                "requestCount" to snaps.sumOf { it.requestCount },
+                "errorCount" to snaps.sumOf { it.errorCount },
+                "avgResponseTime" to if (snaps.isNotEmpty()) snaps.map { it.avgResponseTime }.average() else 0.0,
+                "p95ResponseTime" to if (snaps.isNotEmpty()) snaps.map { it.p95ResponseTime }.average() else 0.0
+            )
+        }
+
         model.addAttribute("execution", execution)
         model.addAttribute("plan", plan)
+        model.addAttribute("overallSnapshots", overallSnapshots)
+        model.addAttribute("stepSummary", stepSummary)
         return "executions/detail"
     }
 
