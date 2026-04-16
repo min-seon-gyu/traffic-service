@@ -1,5 +1,7 @@
 package com.traffic.domain.config
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 data class LoadConfig(
     val vuCount: Int = 1,
     val requestsPerVu: Int? = null,
@@ -8,5 +10,6 @@ data class LoadConfig(
     val stages: List<Stage> = emptyList(),
     val maxDuration: Int = 600
 ) {
+    @JsonIgnore
     fun isStagesMode(): Boolean = stages.isNotEmpty()
 }

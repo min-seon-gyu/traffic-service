@@ -20,27 +20,27 @@ class TestPlan(
     @Column(nullable = false)
     var targetBaseUrl: String,
 
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "TEXT")
     @Convert(converter = LoadConfigConverter::class)
     var loadConfig: LoadConfig = LoadConfig(),
 
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "TEXT")
     @Convert(converter = SafetyConfigConverter::class)
     var safetyConfig: SafetyConfig = SafetyConfig(),
 
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "TEXT")
     @Convert(converter = ThresholdListConverter::class)
     var thresholds: List<Threshold> = emptyList(),
 
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "TEXT")
     @Convert(converter = AuthConfigConverter::class)
     var authConfig: AuthConfig = AuthConfig(),
 
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "TEXT")
     @Convert(converter = AdvancedConfigConverter::class)
     var advancedConfig: AdvancedConfig = AdvancedConfig(),
 
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "TEXT")
     @Convert(converter = DataSourceConfigConverter::class)
     var dataSourceConfig: DataSourceConfig? = null,
 

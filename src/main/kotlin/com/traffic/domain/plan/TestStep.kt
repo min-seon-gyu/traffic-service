@@ -27,7 +27,7 @@ class TestStep(
     @Column(nullable = false)
     var path: String,
 
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "TEXT")
     @Convert(converter = HeadersConverter::class)
     var headers: Map<String, String> = emptyMap(),
 
@@ -36,11 +36,11 @@ class TestStep(
 
     var thinkTimeMs: Int? = null,
 
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "TEXT")
     @Convert(converter = ExtractorListConverter::class)
     var extractors: List<Extractor> = emptyList(),
 
-    @Column(columnDefinition = "JSON")
+    @Column(columnDefinition = "TEXT")
     @Convert(converter = ValidatorListConverter::class)
     var validators: List<StepValidator> = emptyList()
 )
