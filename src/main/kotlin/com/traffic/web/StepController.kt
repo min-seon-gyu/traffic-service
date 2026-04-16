@@ -46,12 +46,12 @@ class StepController(
             )
         )
 
-        return "redirect:/plans/$planId/steps"
+        return "redirect:/plans/$planId"
     }
 
     @PostMapping("/{stepId}/delete")
     fun deleteStep(@PathVariable planId: Long, @PathVariable stepId: Long): String {
         stepRepository.deleteById(stepId)
-        return "redirect:/plans/$planId/steps"
+        return "redirect:/plans/$planId"
     }
 }
