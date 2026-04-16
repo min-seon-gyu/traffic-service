@@ -1,5 +1,6 @@
 package com.traffic.web
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.traffic.domain.plan.*
 import com.traffic.service.TestPlanService
 import org.springframework.stereotype.Controller
@@ -21,18 +22,29 @@ class StepController(
         return "plans/steps"
     }
 
+    private val mapper = jacksonObjectMapper()
+
     @PostMapping
     fun addStep(
         @PathVariable planId: Long,
         @RequestParam name: String,
         @RequestParam httpMethod: HttpMethod,
         @RequestParam path: String,
+        @RequestParam(required = false) headers: String?,
         @RequestParam(required = false) body: String?,
         @RequestParam(required = false) thinkTimeMs: Int?
     ): String {
         val plan = planService.findById(planId) ?: return "redirect:/plans"
         val steps = planService.getSteps(planId)
         val nextIndex = (steps.maxOfOrNull { it.orderIndex } ?: -1) + 1
+
+        val parsedHeaders: Map<String, String> = if (!headers.isNullOrBlank()) {
+            try {
+                mapper.readValue(headers, mapper.typeFactory.constructMapType(Map::class.java, String::class.java, String::class.java))
+            } catch (e: Exception) {
+                emptyMap()
+            }
+        } else emptyMap()
 
         stepRepository.save(
             TestStep(
@@ -41,6 +53,7 @@ class StepController(
                 name = name,
                 httpMethod = httpMethod,
                 path = path,
+                headers = parsedHeaders,
                 body = body,
                 thinkTimeMs = thinkTimeMs
             )

@@ -96,6 +96,7 @@
                     <div class="step-info">
                         <div class="step-name" th:text="${step.name}"></div>
                         <div class="step-path" th:text="${step.path}"></div>
+                        <div th:if="${step.headers != null && !step.headers.isEmpty()}" class="step-path" style="color:var(--violet);" th:text="'Headers: ' + ${step.headers.size()} + ' set'"></div>
                     </div>
                     <span class="step-meta" th:text="${step.thinkTimeMs != null ? step.thinkTimeMs + 'ms' : 'default'}"></span>
                     <form th:action="@{/plans/{pid}/steps/{sid}/delete(pid=${plan.id},sid=${step.id})}" method="post">
@@ -133,6 +134,10 @@
                         <label>Think Time (ms, optional)</label>
                         <input type="number" name="thinkTimeMs" class="form-control" min="0"/>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label>Headers (JSON)</label>
+                    <textarea name="headers" class="form-control" rows="2" placeholder='{"Content-Type": "application/json", "Authorization": "Bearer token"}'></textarea>
                 </div>
                 <div class="form-group">
                     <label>Body (JSON)</label>
