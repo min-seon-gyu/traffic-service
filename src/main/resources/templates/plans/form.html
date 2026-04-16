@@ -15,7 +15,7 @@
     <!-- Plan Config -->
     <div class="card fade-up">
         <div class="card-header"><h3>Plan Configuration</h3></div>
-        <form th:action="${isNew} ? @{/plans} : @{/plans/{id}(id=${plan.id})}" method="post">
+        <form th:action="${isNew} ? @{/plans} : @{/plans/{id}(id=${plan.id})}" method="post" id="planForm" onsubmit="return validatePlanForm()">
             <div class="grid-2">
                 <div class="form-group">
                     <label>Name <span class="tip" data-tip="테스트 플랜의 이름입니다.">?</span></label>
@@ -38,16 +38,16 @@
                     <input type="number" name="vuCount" class="form-control" th:value="${plan.loadConfig.vuCount}" min="1"/>
                 </div>
                 <div class="form-group">
-                    <label>Requests per VU <span class="tip" data-tip="각 VU가 보내는 총 요청 수입니다. 비워두면 Duration 기반으로 동작합니다.">?</span></label>
-                    <input type="number" name="requestsPerVu" class="form-control" th:value="${plan.loadConfig.requestsPerVu}" min="1"/>
+                    <label>Requests per VU <span class="tip" data-tip="각 VU가 보내는 총 요청 수입니다. Duration과 둘 중 하나는 반드시 입력해야 합니다. Stages 설정 시에는 불필요합니다.">?</span></label>
+                    <input type="number" name="requestsPerVu" class="form-control" th:value="${plan.loadConfig.requestsPerVu}" min="1" id="requestsPerVu"/>
                 </div>
                 <div class="form-group">
                     <label>Ramp-up (seconds) <span class="tip" data-tip="VU를 점진적으로 늘리는 시간(초)입니다. 0이면 모든 VU가 동시에 시작합니다.">?</span></label>
                     <input type="number" name="rampUpSeconds" class="form-control" th:value="${plan.loadConfig.rampUpSeconds}" min="0"/>
                 </div>
                 <div class="form-group">
-                    <label>Duration (seconds) <span class="tip" data-tip="테스트 지속 시간(초)입니다. 비워두면 Requests per VU 기반으로 동작합니다.">?</span></label>
-                    <input type="number" name="durationSeconds" class="form-control" th:value="${plan.loadConfig.durationSeconds}" min="1"/>
+                    <label>Duration (seconds) <span class="tip" data-tip="테스트 지속 시간(초)입니다. Requests per VU와 둘 중 하나는 반드시 입력해야 합니다. Stages 설정 시에는 불필요합니다.">?</span></label>
+                    <input type="number" name="durationSeconds" class="form-control" th:value="${plan.loadConfig.durationSeconds}" min="1" id="durationSeconds"/>
                 </div>
                 <div class="form-group">
                     <label>Max Duration (seconds) <span class="tip" data-tip="테스트의 최대 허용 시간(초)입니다. 이 시간이 지나면 강제 종료됩니다.">?</span></label>
@@ -378,6 +378,17 @@ function toggleThinkTime() {
 }
 function toggleAuthTokens() {
     document.getElementById('authTokensGroup').style.display = document.getElementById('authMode').value === 'TOKEN_POOL' ? '' : 'none';
+}
+function validatePlanForm() {
+    const stages = document.querySelectorAll('#stage-list .stage-row');
+    if (stages.length > 0) return true;
+    const rpv = document.getElementById('requestsPerVu').value.trim();
+    const dur = document.getElementById('durationSeconds').value.trim();
+    if (!rpv && !dur) {
+        alert('Requests per VU 또는 Duration 중 하나는 반드시 입력해야 합니다.\n(Stages를 설정한 경우에는 불필요합니다.)');
+        return false;
+    }
+    return true;
 }
 document.addEventListener('DOMContentLoaded', function() { toggleThinkTime(); toggleAuthTokens(); });
 </script>
